@@ -88,6 +88,7 @@ def add_item():
     st.session_state.item_count += 1
 
 
+
 # 물품추가 버튼에 콜백 함수 연결
 with col_left:
     if st.button("물품추가", on_click=add_item):
@@ -115,5 +116,3 @@ with col_aux:
     if st.checkbox("파일로 저장"):
         df.to_csv("output.csv")
 st.table(df)  
-
-st.write("감사합니다.")
