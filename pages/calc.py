@@ -48,10 +48,11 @@ def calculate_budget(budget, labels, prices):
     return quantity
 
 # 웹 앱 UI 구현
-st.title("예산 활용 계획 계산기")
+st.title("알잘딱깔센 예산 쓰기")
+st.subheader("예산 0 만들기")
 
 # 예산 입력
-budget = st.number_input("예산", min_value=0)
+budget = st.number_input("예산", min_value=10, help="사용해야하는 예산을 입력하세요.")
 
 # session_state를 확인하여 물품 개수를 관리합니다.
 if 'item_count' not in st.session_state:
@@ -62,40 +63,53 @@ item_names = []
 item_prices = []
 
 for i in range(st.session_state.item_count):
-    col_name, col_min, col_max, col_price, col_usable = st.columns([3,1,1,2,1])
+    col_name, col_min, col_max, col_price, col_usable = st.columns([3,1,1,2,1.1])
     with col_name:
         # 고유한 키를 생성하기 위해 인덱스를 사용합니다.
-        item_name = st.text_input(f"물품 이름 {i+1}", key=f"item_name_{i}")
+        item_name = st.text_input("", key=f"item_name_{i}",placeholder=f"물품{i+1} 이름 입력")
     with col_min:
-        item_price = st.number_input(f"최소 {i+1}", min_value=0, key=f"item_min_{i}")
+        item_min = st.number_input(f"최소 {i+1}", min_value=0, key=f"item_min_{i}")
     with col_max:
-        item_price = st.number_input(f"최대 {i+1}", min_value=0, key=f"item_max_{i}")
+        item_max = st.number_input(f"최대 {i+1}", min_value=0, key=f"item_max_{i}")
     with col_price:
         item_price = st.number_input(f"물품 단가 {i+1}", min_value=0, key=f"item_price_{i}")
     with col_usable:
-        item_usable = st.checkbox("선택", key=f"item_usable_{i+1}")
-    st.write("---")
+        item_usable = st.checkbox(f"물품{i+1}", key=f"item_usable_{i}",value="True")
 
     
     item_names.append(item_name)
     item_prices.append(item_price)
 
-# 물품추가 버튼을 눌렀을 때 item_count를 증가시킵니다.
-if st.button("물품추가"):
+
+col_left, col_right = st.columns(2)
+
+# 물품추가 버튼 클릭 시 호출되는 함수
+def add_item():
     st.session_state.item_count += 1
 
+
+# 물품추가 버튼에 콜백 함수 연결
+with col_left:
+    if st.button("물품추가", on_click=add_item):
+        pass
+
+
 # 계산 버튼 클릭 이벤트 핸들러
-if st.button("계산하기"):
-    # 계산 결과를 구합니다.
-    quantity = calculate_budget(budget, item_names, item_prices)
+with col_right:
+    if st.button("계산하기"):
+        # 계산 결과를 구합니다.
+        quantity = calculate_budget(budget, item_names, item_prices)
 
     # 결과를 화면에 표시합니다.
-    df = pd.DataFrame({
-        "품목": item_names,
-        "단가": item_prices,
-        "수량": quantity
-    })
-    
+    try:        
+        df = pd.DataFrame({
+            "품목": item_names,
+            "단가": item_prices,
+            "수량": quantity
+        })
+    except:
+        pass
+
     st.table(df)  # 여기서 to_html()은 제거해야 합니다.
 
     # 파일로 저장하는 기능을 제공합니다.
