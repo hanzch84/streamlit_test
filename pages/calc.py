@@ -81,7 +81,7 @@ for i in range(st.session_state.item_count):
     item_prices.append(item_price)
 
 
-col_left, col_right = st.columns(2)
+col_left, col_right, col_aux = st.columns(3)
 
 # 물품추가 버튼 클릭 시 호출되는 함수
 def add_item():
@@ -108,10 +108,12 @@ with col_right:
         "수량": quantity
     })
 
-    st.table(df)  
 
-    # 파일로 저장하는 기능을 제공합니다.
-    if st.checkbox("파일로 저장"):
-        df.to_csv("output.csv")
+
+    with col_aux:
+        # 파일로 저장하는 기능을 제공합니다.
+        if st.checkbox("파일로 저장"):
+            df.to_csv("output.csv")
+    st.table(df)  
 
 st.write("감사합니다.")
