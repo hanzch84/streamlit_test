@@ -60,6 +60,8 @@ languages_selected = get_language_codes(radio_option, language_dict)
 picture = st.camera_input("#사진을 찍으면 문자를 인식해요!")
 if picture is not None:
     if radio_option.__len__() != 0:
+        
         outputs = ocr_label(picture, languages_selected)
-        ocr_text = list(zip(*outputs))[1]
-        st.write(ocr_text)
+        if outputs.__len__() != 0:
+            ocr_text = list(zip(*outputs))[1]
+            st.write(ocr_text)
