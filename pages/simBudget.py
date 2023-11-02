@@ -2,6 +2,18 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 
+# Streamlit 페이지에 CSS를 추가하여 모든 숫자 입력란의 텍스트를 오른쪽으로 정렬합니다.
+st.markdown(
+    """
+    <style>
+    input[type="number"] {
+        text-align: right;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # 문자열의 출력 길이를 구하는 함수
 def getPrintLength(s):
     let = 0
@@ -49,7 +61,7 @@ def calculate_budget(budget, labels, prices):
 
 # 웹 앱 UI 구현
 st.title("👌알잘딱깔센 예산 쓰기")
-st.subheader("예산 0 만들기")
+st.subheader("예산 0원 만들기")
 
 # 예산 입력
 budget = st.number_input("예산", min_value=10, help="사용해야하는 예산을 입력하세요.")
