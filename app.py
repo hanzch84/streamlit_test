@@ -2,6 +2,9 @@ import streamlit as st
 
 st.title("현수의 페이지!")
 st.subheader("Hello, world!")
+
+
+
 # st.caption("the page for simbudget")
 # name=st.text_input("이름을 입력해주세요.")
 
