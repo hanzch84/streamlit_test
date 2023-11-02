@@ -1,1 +1,1 @@
-streamlit
+streamlit,pillow, opencv-python, easyocr, numpy
