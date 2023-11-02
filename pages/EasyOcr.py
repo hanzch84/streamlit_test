@@ -35,7 +35,6 @@ def ocr_label(image_data,lang):
         image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
 
     st.image(image, channels="BGR")
-    print(result)
     return result
 st.title("Easy OCR 카메라")
 # 멀티선택
