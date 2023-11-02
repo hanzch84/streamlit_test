@@ -1,5 +1,5 @@
 streamlit
-pillow
+Pillow
 opencv-python
 easyocr
 numpy

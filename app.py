@@ -9,7 +9,6 @@ st.subheader("Hello, world!")
 #     st.write(f"#**{name}**님 안녕하세요!")
 #     st.balloons()
 #     #st.snow()
-
 # st.code("sudo apt-get update")
 # st.latex("1\\times 2=3,x+3=2")
 # st.latex(r"1\times 2=3, x+3=2")
