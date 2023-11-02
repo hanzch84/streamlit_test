@@ -115,5 +115,3 @@ with col_aux:
     if st.checkbox("파일로 저장"):
         df.to_csv("output.csv")
 st.table(df)  
-
-st.write("감사합니다.")
