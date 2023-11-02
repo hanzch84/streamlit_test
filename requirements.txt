@@ -1,5 +1,5 @@
 streamlit
+easyocr==1.4
 Pillow
 opencv-python
-easyocr
 numpy
