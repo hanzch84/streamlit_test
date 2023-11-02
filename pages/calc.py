@@ -48,7 +48,7 @@ def calculate_budget(budget, labels, prices):
     return quantity
 
 # 웹 앱 UI 구현
-st.title("알잘딱깔센 예산 쓰기")
+st.title("👌알잘딱깔센 예산 쓰기")
 st.subheader("예산 0 만들기")
 
 # 예산 입력
@@ -72,7 +72,7 @@ for i in range(st.session_state.item_count):
     with col_max:
         item_max = st.number_input(f"최대 {i+1}", min_value=0, key=f"item_max_{i}")
     with col_price:
-        item_price = st.number_input(f"물품 단가 {i+1}", min_value=0, key=f"item_price_{i}")
+        item_price = st.number_input(f"물품 단가 {i+1}", min_value=0, key=f"item_price_{i}",value=10, )
     with col_usable:
         item_usable = st.checkbox(f"물품{i+1}", key=f"item_usable_{i}",value="True")
 
@@ -93,6 +93,7 @@ with col_left:
     if st.button("물품추가", on_click=add_item):
         pass
 
+quantity = 0
 
 # 계산 버튼 클릭 이벤트 핸들러
 with col_right:
@@ -101,16 +102,13 @@ with col_right:
         quantity = calculate_budget(budget, item_names, item_prices)
 
     # 결과를 화면에 표시합니다.
-    try:        
-        df = pd.DataFrame({
-            "품목": item_names,
-            "단가": item_prices,
-            "수량": quantity
-        })
-    except:
-        pass
+    df = pd.DataFrame({
+        "품목": item_names,
+        "단가": item_prices,
+        "수량": quantity
+    })
 
-    st.table(df)  # 여기서 to_html()은 제거해야 합니다.
+    st.table(df)  
 
     # 파일로 저장하는 기능을 제공합니다.
     if st.checkbox("파일로 저장"):
