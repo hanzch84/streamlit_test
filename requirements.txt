@@ -1,5 +1,5 @@
 streamlit
-easyocr==1.4
+easyocr
 Pillow
-opencv-python
+opencv-python-headless  # opencv-python 대신 opencv-python-headless 사용
 numpy
