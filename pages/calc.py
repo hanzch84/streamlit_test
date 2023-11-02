@@ -108,9 +108,10 @@ with col_right:
             "수량": quantity
         })
 
-st.table(df)  
 
-with col_aux:
-    # 파일로 저장하는 기능을 제공합니다.
-    if st.checkbox("파일로 저장"):
-        df.to_csv("output.csv")
+    with col_aux:
+        # 파일로 저장하는 기능을 제공합니다.
+        if st.checkbox("파일로 저장"):
+            df.to_csv("output.csv")
+
+    st.table(df)  
