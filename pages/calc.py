@@ -101,19 +101,19 @@ with col_right:
         # 계산 결과를 구합니다.
         quantity = calculate_budget(budget, item_names, item_prices)
 
-    # 결과를 화면에 표시합니다.
-    df = pd.DataFrame({
-        "품목": item_names,
-        "단가": item_prices,
-        "수량": quantity
-    })
+# 결과를 화면에 표시합니다.
+df = pd.DataFrame({
+    "품목": item_names,
+    "단가": item_prices,
+    "수량": quantity
+})
 
 
 
-    with col_aux:
-        # 파일로 저장하는 기능을 제공합니다.
-        if st.checkbox("파일로 저장"):
-            df.to_csv("output.csv")
-    st.table(df)  
+with col_aux:
+    # 파일로 저장하는 기능을 제공합니다.
+    if st.checkbox("파일로 저장"):
+        df.to_csv("output.csv")
+st.table(df)  
 
 st.write("감사합니다.")
