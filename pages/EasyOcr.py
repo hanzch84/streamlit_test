@@ -53,8 +53,8 @@ get_language_codes = lambda names, d: list(map(d.get, filter(d.__contains__, nam
 
 # 예제 딕셔너리
 language_dict = {
-    '한국어': 'ko',
-    '영어': 'en',
+    "한국어": "ko",
+    "영어": "en",
 }
 
 font_color = hex_to_rgb(st.color_picker('Pick a color',))
