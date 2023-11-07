@@ -204,7 +204,7 @@ for i in range(st.session_state.item_count):
     with col1:
         # If the checkbox is unchecked, disable the input fields
         is_disabled = not st.session_state.get(f'item_usable_{i}', True)
-        item_name = st.text_input("",
+        item_name = st.text_input(f"물품{i+1} 이름 입력", label_visibility='collapsed',
                                   key=f"item_name_{i}",
                                   placeholder=f"물품{i+1} 이름 입력",
                                   disabled=is_disabled)
