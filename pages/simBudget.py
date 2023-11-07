@@ -17,6 +17,7 @@ csv파일로 결과를 다운받습니다.'''
 result_header =[]
 result_list =[]
 result_prices=[]
+
 # Streamlit 페이지에 CSS를 추가하여 모든 숫자 입력란의 텍스트를 오른쪽으로 정렬합니다.
 st.markdown(
     """
@@ -232,8 +233,6 @@ for i in range(st.session_state.item_count):
 print(item_names)
 print(item_prices)
 print(budget)
-
-
 
 col_left, col_right, col_aux = st.columns(3)
 
