@@ -274,7 +274,10 @@ def calculate_amount(df, prices):
     return df
 
 # 함수를 사용하여 '금액' 열을 계산하고 데이터프레임에 추가합니다.
-df = calculate_amount(df, result_prices)
+try:
+    df = calculate_amount(df, result_prices)
+except:
+    pass
 
 
 with col_aux:
