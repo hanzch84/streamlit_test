@@ -199,6 +199,17 @@ if 'item_count' not in st.session_state:
 item_names = []
 item_prices = []
 col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 2, 1.1])
+with col1:
+    st.write("물품이름")
+with col2:
+    st.write("최소구매")
+with col3:
+    st.write("최대구매")
+with col4:
+    st.write("물품단가")
+with col5:
+    st.write("선택")
+
 for i in range(st.session_state.item_count):
     
     with col1:
@@ -210,19 +221,19 @@ for i in range(st.session_state.item_count):
                                   disabled=is_disabled)
     with col2:
         item_min = st.number_input(f"최소 {i+1}", min_value=0, key=f"item_min_{i}",
-                                  disabled=is_disabled, format="%d")
+                                  disabled=is_disabled, format="%d", label_visibility='collapsed')
     with col3:
         item_max = st.number_input(f"최대 {i+1}", min_value=0, key=f"item_max_{i}",
-                                  disabled=is_disabled, format="%d")
+                                  disabled=is_disabled, format="%d", label_visibility='collapsed')
     with col4:
         item_price = st.number_input("",
                                      min_value=0,
                                      key=f"item_price_{i}",
                                      value=0,
-                                     disabled=is_disabled, format="%d")
+                                     disabled=is_disabled, format="%d", label_visibility='collapsed')
     with col5:
         # Create the checkbox and use the session state value for the default
-        item_usable = st.checkbox("",
+        item_usable = st.checkbox("f'item_usable_{i}'", label_visibility='collapsed',
                                   key=f'item_usable_{i}',
                                   value=st.session_state.get(f'item_usable_{i}', True))
 
