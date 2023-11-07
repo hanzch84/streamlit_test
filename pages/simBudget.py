@@ -198,9 +198,9 @@ if 'item_count' not in st.session_state:
 # 아이템 섹션 생성 반복문
 item_names = []
 item_prices = []
-
+col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 2, 1.1])
 for i in range(st.session_state.item_count):
-    col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 2, 1.1])
+    
     with col1:
         # If the checkbox is unchecked, disable the input fields
         is_disabled = not st.session_state.get(f'item_usable_{i}', True)
