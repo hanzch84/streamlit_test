@@ -20,15 +20,8 @@ result_prices=[]
 st.markdown(
     """
     <style>
-    /* 체크박스 크기 조절 */
-    
-    .chk{ margin-top: 20px; margin-bottom: 20px; }
-    
-    input[type="number"] {
+        input[type="number"] {
         text-align: right;
-    }
-    checkbox{
-        height="20px"
     }
     </style>
     """,
@@ -257,7 +250,7 @@ for i in range(st.session_state.item_count):
                                      disabled=is_disabled, format="%d", label_visibility='collapsed')
     with col5:
         # Create the checkbox and use the session state value for the default
-        item_usable = st.checkbox(f'물품{i+1}', label_visibility='hidden', 
+        item_usable = st.checkbox(f'물품{i+1}', label_visibility='collapsed', 
                                   key=f'item_usable_{i}',
                                   value=st.session_state.get(f'item_usable_{i}', True))
         st.write("")
