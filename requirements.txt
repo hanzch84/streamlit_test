@@ -3,3 +3,8 @@ easyocr
 Pillow
 opencv-python-headless  # opencv-python 대신 opencv-python-headless 사용
 numpy
+seaborn
+openpyxl
+python-docx
+python-pptx
+olefile

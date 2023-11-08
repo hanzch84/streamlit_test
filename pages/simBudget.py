@@ -246,7 +246,7 @@ for i in range(st.session_state.item_count):
         item_max = st.number_input(f"최대 {i+1}", min_value=0, key=f"item_max_{i}",
                                   disabled=is_disabled, format="%d", label_visibility='collapsed')
     with col4:
-        item_price = st.number_input("",
+        item_price = st.number_input(f"물품단가{i+1}",
                                      min_value=0,
                                      key=f"item_price_{i}",
                                      value=0,
@@ -262,9 +262,6 @@ for i in range(st.session_state.item_count):
     if item_usable and item_price > 0:
         item_names.append(item_name if item_name else '')
         item_prices.append(item_price)
-print(item_names)
-print(item_prices)
-print(budget)
 
 col_left, col_right = st.columns(2)
 
