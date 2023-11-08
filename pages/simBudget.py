@@ -270,7 +270,7 @@ print(item_names)
 print(item_prices)
 print(budget)
 
-col_left, col_right, col_aux = st.columns(3)
+col_left, col_right = st.columns(2)
 
 # 물품추가 버튼 클릭 시 호출되는 함수
 def add_item():
