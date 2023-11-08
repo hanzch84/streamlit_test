@@ -80,5 +80,5 @@ if picture is not None:
 
 
 
-options = st.multiselect("인식된 단어를 고르세요.", ocr_text)
-st.write(f"당신이 선택한 단어: {', '.join(options)}")
+        options = st.multiselect("인식된 단어를 고르세요.", ocr_text)
+        st.write(f"당신이 선택한 단어: {', '.join(options)}")
