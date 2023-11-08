@@ -77,3 +77,8 @@ if picture is not None:
         if outputs.__len__() != 0:
             ocr_text = list(zip(*outputs))[1]
             st.write(ocr_text)
+
+
+
+options = st.multiselect("인식된 단어를 고르세요.", ocr_text)
+st.write(f"당신이 선택한 단어: {', '.join(options)}")
