@@ -12,8 +12,6 @@ result_text = '''예산과 단가를 입력한 후
 잠시 계산에서 제외할 수도 있습니다.
 파일로 저장에 체크하면
 csv파일로 결과를 다운받습니다.'''
-
-
 result_header =[]
 result_list =[]
 result_prices=[]
@@ -84,10 +82,8 @@ def calculate_budget(budget, labels, prices):
         case_close = []  # stores the case with balance.
 
         print('__Generated_Data__')
-        text += '# 입력된 데이터\n'
         # _____PRINT item list
         text += '_' * 17 + '입력된 데이터'+ '_' * 17 + '\n'
-  
         for n_prt in range(item_length):
             label = cut_string(labels[n_prt], 28)
             if get_print_length(label) < 28:
@@ -95,7 +91,28 @@ def calculate_budget(budget, labels, prices):
             text += f'품목 #{n_prt + 1:02d} {label}' + (
                         ' ' * (28 - get_print_length(labels[n_prt]))) + f' $ {prices[n_prt]:6,d} \n'
         
-        text += '_' * 46 + '\n'
+        text += '_' * 47 + '\n'
+
+
+        # labels와 prices를 결합하여 prices 기준으로 내림차순 정렬
+        combined = zip(prices, labels)
+        sorted_combined = sorted(combined, reverse=True)
+
+        # 정렬된 데이터를 다시 분리
+        prices, labels = zip(*sorted_combined)
+
+        print('__Sorted_Data__')
+        # _____PRINT item list
+        text += '_' * 17 + '정렬된 데이터'+ '_' * 17 + '\n'
+        for n_prt in range(item_length):
+            label = cut_string(labels[n_prt], 28)
+            if get_print_length(label) < 28:
+                label += ' '
+            text += f'품목 #{n_prt + 1:02d} {label}' + (
+                        ' ' * (28 - get_print_length(labels[n_prt]))) + f' $ {prices[n_prt]:6,d} \n'
+        
+        text += '_' * 47 + '\n'
+
 
         # _____CORE
         while not (node == -1 and over == True):
