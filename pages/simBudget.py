@@ -22,8 +22,15 @@ result_prices=[]
 st.markdown(
     """
     <style>
+    /* 체크박스 크기 조절 */
+    
+    .chk{ margin-top: 20px; margin-bottom: 20px; }
+    
     input[type="number"] {
         text-align: right;
+    }
+    checkbox{
+        height="20px"
     }
     </style>
     """,
@@ -198,7 +205,7 @@ if 'item_count' not in st.session_state:
 # 아이템 섹션 생성 반복문
 item_names = []
 item_prices = []
-col1, col2, col3, col4, col5 = st.columns([2.5, 0.75, 0.75, 2, 1])
+col1, col2, col3, col4, col5 = st.columns([2.5, 1, 1, 2, 1])
 with col1:
     st.write("물품이름")
 with col2:
@@ -233,9 +240,10 @@ for i in range(st.session_state.item_count):
                                      disabled=is_disabled, format="%d", label_visibility='collapsed')
     with col5:
         # Create the checkbox and use the session state value for the default
-        item_usable = st.checkbox("f'item_usable_{i}'", label_visibility='collapsed',
+        item_usable = st.checkbox(f'물품{i+1}', label_visibility='hidden', 
                                   key=f'item_usable_{i}',
                                   value=st.session_state.get(f'item_usable_{i}', True))
+        st.write("")
 
     # If the checkbox is checked and the price is greater than 0, append to lists
     if item_usable and item_price > 0:
