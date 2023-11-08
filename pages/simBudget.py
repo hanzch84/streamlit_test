@@ -21,7 +21,7 @@ st.markdown(
     """
     <style>
         input[type="checkbox"] {
-        top-margin: 10px;
+        height: 40px;
     }
         input[type="number"] {
         text-align: right;
