@@ -63,7 +63,7 @@ st.write(font_color)
 # 함수 호출 및 결과 출력
 
 # 라디오 버튼
-radio_option = st.radio("당신의 선택은?", ["한국어", "영어", "한국어, 영어"])
+radio_option = st.radio("당신의 선택은?", ["한국어, 영어","한국어","영어"])
 st.write(f"당신은 {radio_option}을(를) 선택하셨습니다.")
 if radio_option=="한국어, 영어":
     radio_option=["한국어", "영어"]
