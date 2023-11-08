@@ -20,6 +20,9 @@ result_prices=[]
 st.markdown(
     """
     <style>
+        input[type="checkbox"] {
+        top-margin: 10px;
+    }
         input[type="number"] {
         text-align: right;
     }
