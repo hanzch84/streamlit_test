@@ -3,7 +3,7 @@ import easyocr
 import cv2
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
-
+options=[]
 def ocr_label(image_data,lang,font_color):
     font_path = 'pages/D2Coding-Ver1.3.2-20180524.ttf'
     font = ImageFont.truetype(font_path, 24, encoding='utf-8')
