@@ -8,10 +8,9 @@ result_text = '''예산과 단가를 입력한 후
 살 수 있는 방법을 찾아줍니다.
 물품 추가 버튼을 눌러
 물품을 추가할 수도 있고,
-체크박스의 체크 표시를 해제하면
+체크 박스의 체크 표시를 해제하면
 잠시 계산에서 제외할 수도 있습니다.
-파일로 저장에 체크하면
-csv파일로 결과를 다운받습니다.'''
+'''
 result_header =[]
 result_list =[]
 result_prices=[]
@@ -20,12 +19,14 @@ result_prices=[]
 st.markdown(
     """
     <style>
-        input[type="checkbox"] {
-        height: 40px;
-    }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+body, .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput {
+    font-family: 'JetBrains Mono', monospace !important;
+}
         input[type="number"] {
         text-align: right;
-    }
+        }
     </style>
     """,
     unsafe_allow_html=True
@@ -56,39 +57,83 @@ def cut_string(s, max_length):
         length += char_length
     return cut_s
 
+# 아이템 활성화/비활성화 업데이트 함수
+def update_item_availability(i, budget):
+    item_price = st.session_state.get(f"item_price_{i}", 0)
+    if budget > 0 and item_price > 0 and item_price <= budget:
+        max_quantity = budget // item_price
+        st.session_state[f"item_max_{i}"] = max_quantity
+        st.session_state[f"item_disabled_{i}"] = False
+    else:
+        st.session_state[f"item_disabled_{i}"] = True
+
+# 예산 변경 시 호출되는 함수
+def on_budget_change():
+    budget = st.session_state.get("budget", 0)
+    for i in range(st.session_state.item_count):
+        update_item_availability(i, budget)
+
+# 단가 변경 시 호출되는 함수
+def on_price_change():
+    budget = st.session_state.get("budget", 0)
+    # 모든 아이템에 대해 update_item_availability 함수를 호출합니다.
+    for i in range(st.session_state.item_count):
+        update_item_availability(i, budget)
+
+# 아이템의 최소 구매량 입력 필드가 변경될 때 호출되는 함수
+def on_limit_change(index,field):
+    '''
+    # 새로운 최소 구매량을 가져옵니다.
+    new_min = st.session_state.get(f'item_min_{index}', 0)
+    new_max = st.session_state.get(f"item_max_{index}", 0)
+    if field == "min":
+        st.session_state[f'item_max_min_value_{index}'] = new_min
+    elif field == "max":
+        st.session_state[f'item_min_max_value_{index}'] = new_max
+        
+    if new_min==0 and new_max == 0:
+        pass
+    
+    # 최소 구매량이 최대 구매량보다 크면, 최대 구매량을 최소 구매량으로 설정합니다.
+    elif new_min > new_max:
+        st.session_state[f"item_max_{index}"] = new_min
+    # item_max의 min_value를 새로운 최소 구매량으로 설정합니다.
+ 
+    elif new_min < new_max:
+        st.session_state[f"item_max_{index}"] = new_min
+    # item_min의 max_value를 새로운 최대 구매량으로 설정합니다.
+    '''
+
 # 예산 계산 함수
 def calculate_budget(budget, labels, prices):
     try:
-        text = ""
-        text += f'Your budget to spend out is ${budget:d}\n'
+        text_out = ""
+        text_out += f'Your budget to spend out is ${budget:d}\n'
   
         quantity = [0] * len(labels)  # Set the List to count the quantity of Each Items.
-        left = [0] * len(labels)  # Set the List to save left budget after spend (each item * quantity)
+        balances = [0] * len(labels)  # Set the List to save left budget after spend (each item * quantity)
 
-        over = False  # It checks budget over error.
+        is_overrun = False  # It checks budget over error.
 
         item_length = len(prices)  # check the numbers of item to calculate.
-        node_end = item_length - 2  # is the end of node we change quantity manually.
-        last_idx = item_length - 1  # is the last number of list index
-        node = node_end  # node number sets to node_end(default position)
+        last_node = item_length - 2  # is the end of node we change quantity manually.
+        last_index = item_length - 1  # is the last number of list index
+        node = last_node  # node number sets to node_end(default position)
 
-        case_number = 0  # counts how many cases we checked.
+        case_count = 0  # counts how many cases we checked.
 
         case_exact = []  # stores the case with no balance.
         case_close = []  # stores the case with balance.
 
-        print('__Generated_Data__')
-        # _____PRINT item list
-        text += '_' * 17 + '입력된 데이터'+ '_' * 17 + '\n'
+        # PRINT item list
+        text_out += '_' * 17 + '입력된 데이터'+ '_' * 17 + '\n'
         for n_prt in range(item_length):
             label = cut_string(labels[n_prt], 28)
             if get_print_length(label) < 28:
                 label += ' '
-            text += f'품목 #{n_prt + 1:02d} {label}' + (
+            text_out += f'품목 #{n_prt + 1:02d} {label}' + (
                         ' ' * (28 - get_print_length(labels[n_prt]))) + f' $ {prices[n_prt]:6,d} \n'
-        
-        text += '_' * 47 + '\n'
-
+        text_out += '_' * 47 + '\n'
 
         # labels와 prices를 결합하여 prices 기준으로 내림차순 정렬
         combined = zip(prices, labels)
@@ -97,55 +142,52 @@ def calculate_budget(budget, labels, prices):
         # 정렬된 데이터를 다시 분리
         prices, labels = zip(*sorted_combined)
 
-        print('__Sorted_Data__')
-        # _____PRINT item list
-        text += '_' * 17 + '정렬된 데이터'+ '_' * 17 + '\n'
+        # 내림차순 정렬된 아이템 데이터를 출력
+        text_out += '_' * 17 + '정렬된 데이터'+ '_' * 17 + '\n'
         for n_prt in range(item_length):
             label = cut_string(labels[n_prt], 28)
             if get_print_length(label) < 28:
                 label += ' '
-            text += f'품목 #{n_prt + 1:02d} {label}' + (
+            text_out += f'품목 #{n_prt + 1:02d} {label}' + (
                         ' ' * (28 - get_print_length(labels[n_prt]))) + f' $ {prices[n_prt]:6,d} \n'
-        
-        text += '_' * 47 + '\n'
-
+        text_out += '_' * 47 + '\n'
 
         # _____CORE
-        while not (node == -1 and over == True):
+        while not (node == -1 and is_overrun == True):
             # CALCULATE THE BUDGET
             # Set the left money after buy first item to left[0] according to list qnty[0]
-            left[0] = budget - (quantity[0] * prices[0])
+            balances[0] = budget - (quantity[0] * prices[0])
             # Set the left money after buy items to left[n] according to list qnty[n]
-            for n in range(1, last_idx):
-                left[n] = left[n - 1] - (quantity[n] * prices[n])
+            for n in range(1, last_index):
+                balances[n] = balances[n - 1] - (quantity[n] * prices[n])
             # With the left money, calculates How many items(Last one) can be bought.
-            quantity[last_idx] = int(left[last_idx - 1] / prices[last_idx])
-            left[last_idx] = left[last_idx - 1] - (quantity[last_idx] * prices[last_idx])
+            quantity[last_index] = int(balances[last_index - 1] / prices[last_index])
+            balances[last_index] = balances[last_index - 1] - (quantity[last_index] * prices[last_index])
 
             #  CHECK ERROR(Over Purchasing)
             #  IF ERROR occurs reset current node's 'qnty'(quantity) to 0.
             # and node up to count up upper node item's 'qnty'(quantity).
-            if any([i < 0 for i in left]):
-                over = True
+            if any([i < 0 for i in balances]):
+                is_overrun = True
                 quantity[node] = 0
                 node -= 1
 
             #  IF there is no ERROR, Set over to False.
             # and reset node to the end(index of just before the last item in the list)
             else:
-                over = False
-                node = node_end
+                is_overrun = False
+                node = last_node
                 # SAVE THE RESULT
                 # IF Balance is $0, then save it to the case_exact
                 # IF Balance is over $0, save it to the case_close
-                if (left[last_idx] == 0):
+                if (balances[last_index] == 0):
                     case_exact.append(list(quantity))
-                elif (left[last_idx] > 0):
+                elif (balances[last_index] > 0):
                     case_close.append(list(quantity))
 
             # PREPAIR NEXT CASE
             quantity[node] += 1
-            case_number += 1
+            case_count += 1
 
         # _____Print result of the program.
         if len(case_exact) == 0:
@@ -157,8 +199,8 @@ def calculate_budget(budget, labels, prices):
             # If there is no perfect case. set the close case list to show.
             print('There is no way to spend all of     $', format(budget, '7,d'))
             print('Next best case', plural, ' ', isare, sep='')
-            text += f'\u00A0{budget:7,d}원의 예산에 맞게 구입할 방법이 없습니다.\n\n'
-            text += '예산에 근접한 구입 계획은 아래와 같습니다.\n\n'
+            text_out += f'\u00A0{budget:7,d}원의 예산에 맞게 구입할 방법이 없습니다.\n\n'
+            text_out += '예산에 근접한 구입 계획은 아래와 같습니다.\n\n'
             list_show = case_close
 
         else:
@@ -167,19 +209,18 @@ def calculate_budget(budget, labels, prices):
             if len(case_exact) == 1:
                 plural = ''
             print('FOUND ', len(case_exact), ' PERFECT case', plural, ' to spend $', format(budget, '7,d'), sep='')
-            text += f'\u00A0{budget:7,d}원의 예산에 맞는 {len(case_exact)}개의 완벽한 방법을 찾았습니다.\n\n'
+            text_out += f'\u00A0{budget:7,d}원의 예산에 맞는 {len(case_exact)}개의 완벽한 방법을 찾았습니다.\n\n'
             list_show = case_exact
 
         # Print the title of List.
-        print('  ', end='')
         list_header = []
-        text += '\u00A0\u00A0'
+        text_out += '\u00A0\u00A0'
         for n_title in range(0, item_length):
             print('#', format(n_title + 1, '02d'), '  ', end='', sep='')
             list_header.append(f'#{n_title + 1:02d}')
-            text += f'#{n_title + 1:02d}  '
+            text_out += f'#{n_title + 1:02d}  '
         print('')
-        text += '\n\n '
+        text_out += '\n'
 
         # List up cases.
         for n_caseshow in list_show:
@@ -187,69 +228,74 @@ def calculate_budget(budget, labels, prices):
             for n_index, n_itemshow in enumerate(n_caseshow):
                 sum_show += n_itemshow * prices[n_index]
                 print(format(n_itemshow, '3d'), 'EA', sep='', end='')
-                text += '\u00A0'*(3-len(str(n_itemshow))) + f'{n_itemshow}EA'
+                text_out += '\u00A0'*(3-len(str(n_itemshow))) + f'{n_itemshow}EA'
 
             print('   $', format(sum_show, '7,d'), sep='')
-            text += '   $' + format(sum_show, '7,d') + '\n\n '
+            text_out += '   $' + format(sum_show, '7,d') + '\n'
 
-        print('The program has calculated', case_number + 1, 'cases.')
-        text += f'이 프로그램은 {case_number + 1}개의 케이스를 계산했습니다.\n'
+        print('The program has calculated', case_count + 1, 'cases.')
+        text_out += f'이 프로그램은 {case_count + 1}개의 케이스를 계산했습니다.\n'
 
     except:
-        text = '에러입니다.'
+        text_out = '에러입니다.'
         list_header =[]
         list_show =[]
 
 
     # 결과를 리턴
-    return text, list_header, list_show, prices
+    return text_out, list_header, list_show, prices
 
 # 웹 앱 UI 구현
 st.title("👌알잘딱깔센 예산 쓰기")
 st.subheader("예산 0원 만들기")
 
-# 예산 입력
-budget = st.number_input("예산", min_value=0, help="사용해야하는 예산을 입력하세요.", format="%d")
+# 예산 입력란
+budget_input = st.number_input("예산", min_value=0, key="budget", help="사용해야하는 예산을 입력하세요.",
+                               on_change=on_budget_change, format="%d")
 
 # session_state를 확인하여 물품 개수를 관리합니다.
 if 'item_count' not in st.session_state:
-    st.session_state.item_count = 3
+    st.session_state.item_count = 5
 
 # 아이템 섹션 생성 반복문
 item_names = []
 item_prices = []
-col1, col2, col3, col4, col5 = st.columns([2.5, 1, 1, 2, 1])
-with col1:
-    st.write("물품이름")
-with col2:
-    st.write("최소구매")
-with col3:
-    st.write("최대구매")
-with col4:
-    st.write("물품단가")
-with col5:
-    st.write("선택")
+hcol1, hcol2, hcol3, hcol4, hcol5 = st.columns([2.5, 1, 1, 2, 1])
+with hcol1: st.write("물품이름")
+with hcol2: st.write("최소구매")
+with hcol3: st.write("최대구매")
+with hcol4: st.write("물품단가")
+with hcol5: st.write("선택")
 
 for i in range(st.session_state.item_count):
-    
+    col1, col2, col3, col4, col5 = st.columns([2.5, 1, 1, 2, 1])
+    # 체크박스가 해제되어 있는지 체크해 입력 필드들을 비활성화를 결정합니다.
+    is_disabled = not st.session_state.get(f'item_usable_{i}', True)
     with col1:
-        # If the checkbox is unchecked, disable the input fields
-        is_disabled = not st.session_state.get(f'item_usable_{i}', True)
         item_name = st.text_input(f"물품{i+1} 이름 입력", label_visibility='collapsed',
-                                  key=f"item_name_{i}",
-                                  placeholder=f"물품{i+1} 이름 입력",
+                                  key=f"item_name_{i}", placeholder=f"물품{i+1} 이름 입력",
                                   disabled=is_disabled)
     with col2:
-        item_min = st.number_input(f"최소 {i+1}", min_value=0, key=f"item_min_{i}",
-                                  disabled=is_disabled, format="%d", label_visibility='collapsed')
+        item_min = st.number_input(f"최소 {i+1}",
+                                   on_change=on_limit_change(i,"min"),
+                                   min_value=0,
+                                   max_value=st.session_state.get(f'item_min_max_value_{i}',),
+                                   key=f"item_min_{i}",
+                                   disabled=is_disabled or st.session_state.get(f"item_disabled_{i}", True),  # 여기에 disabled 상태를 적용합니다.
+                                   format="%d", label_visibility='collapsed')
     with col3:
-        item_max = st.number_input(f"최대 {i+1}", min_value=0, key=f"item_max_{i}",
-                                  disabled=is_disabled, format="%d", label_visibility='collapsed')
+        item_max = st.number_input(f"최대 {i+1}",
+                                   on_change=on_limit_change(i,"max"),
+                                   min_value=st.session_state.get(f'item_max_min_value_{i}', 0),
+                                   key=f"item_max_{i}",
+                                   disabled=is_disabled or st.session_state.get(f"item_disabled_{i}", True),  # 여기에 disabled 상태를 적용합니다.
+                                   format="%d", label_visibility='collapsed')
     with col4:
         item_price = st.number_input(f"물품단가{i+1}",
                                      min_value=0,
                                      key=f"item_price_{i}",
                                      value=0,
+                                     on_change=on_price_change,  # 여기에 이벤트 핸들러를 연결합니다.
                                      disabled=is_disabled, format="%d", label_visibility='collapsed')
     with col5:
         # Create the checkbox and use the session state value for the default
@@ -269,8 +315,6 @@ col_left, col_right = st.columns(2)
 def add_item():
     st.session_state.item_count += 1
 
-
-
 # 물품추가 버튼에 콜백 함수 연결
 with col_left:
     if st.button("물품추가", on_click=add_item):
@@ -281,19 +325,17 @@ quantity = 0
 # 계산 버튼 클릭 이벤트 핸들러
 with col_right:
     if st.button("계산하기"):
-        if budget == "" or budget <= 0: result_text = '예산을 정확히 입력하세요.'
+        if budget_input == "" or budget_input <= 0: result_text = '예산을 정확히 입력하세요.'
         elif len(item_prices) == 0: result_text = '단가를 입력하세요.'
         elif min(item_prices) <= 0: result_text = '단가가 0보다 작거나 같습니다.'
-        elif max(item_prices) > budget: result_text = '예산이 부족합니다.'
+        elif max(item_prices) > budget_input: result_text = '예산이 부족합니다.'
         else:
             # 계산 결과를 구합니다.
-            result_text, result_header,result_list, result_prices = calculate_budget(budget, item_names, item_prices)
+            result_text, result_header,result_list, result_prices = calculate_budget(budget_input, item_names, item_prices)
 st.text_area("Results", result_text, height=300)
 
 
 # 결과를 화면에 표시합니다.
-
-
 df = pd.DataFrame(result_list, columns=result_header)
 
 # 새로운 열 '금액'을 계산하고 데이터프레임에 추가하는 함수를 정의합니다.
@@ -308,5 +350,6 @@ try:
 except:
     pass
 
-with st.expander('데이터프레임 보기') :
-    st.dataframe(df)  
+st.dataframe(df)
+    
+    
