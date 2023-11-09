@@ -257,7 +257,7 @@ budget_input = st.number_input("예산", min_value=0, key="budget", help="사용
 
 # session_state를 확인하여 물품 개수를 관리합니다.
 if 'item_count' not in st.session_state:
-    st.session_state.item_count = 5
+    st.session_state.item_count = 4
 
 # 아이템 섹션 생성 반복문
 item_names = []
