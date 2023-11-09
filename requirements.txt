@@ -8,3 +8,4 @@ openpyxl
 python-docx
 python-pptx
 olefile
+plotly
