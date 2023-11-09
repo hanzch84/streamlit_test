@@ -6,6 +6,7 @@ result_text = '''예산과 단가를 입력한 후
 계산하기 버튼을 누르면,
 예산에 딱 맞게 물건을
 살 수 있는 방법을 찾아줍니다.
+
 물품 추가 버튼을 눌러
 물품을 추가할 수도 있고,
 체크 박스의 체크 표시를 해제하면
@@ -102,6 +103,7 @@ def on_limit_change(index,field):
     elif new_min < new_max:
         st.session_state[f"item_max_{index}"] = new_min
     # item_min의 max_value를 새로운 최대 구매량으로 설정합니다.
+    
     '''
 
 # 예산 계산 함수
