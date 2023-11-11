@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import unicodedata
 
 result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누르면,
 예산에 딱 맞게 물건을\n살 수 있는 방법을 찾아줍니다.\n
@@ -16,26 +17,32 @@ st.markdown(
     """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        body, .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput {
+        .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput {
             font-family: 'JetBrains Mono', monospace !important;}
         /* 텍스트 영역의 클래스 이름을 기반으로 스타일 지정 */
         textarea[aria-label="Results"]{
         font-family: JetBrains Mono, sans-serif; /* 원하는 폰트로 변경 */
         font-size: 12px; /* 폰트 크기 설정 */
         }
-        input[type="number"] {text-align: right;}
+        input[type="number"] {
+            text-align: right;
+            font-family: JetBrains Mono, sans-serif; /* 원하는 폰트로 변경 */
+            font-size: 16px; /* 폰트 크기 설정 */}
+        p, input[type="text"] {
+            font-family: JetBrains Mono, sans-serif; /* 원하는 폰트로 변경 */
+            font-size: 16px; /* 폰트 크기 설정 */}
     </style>
     """, unsafe_allow_html=True)
 
 # 문자열의 출력 길이를 구하는 함수(텍스트박스, 콘솔 출력용)
 def get_print_length(s):
-    length = 0
+    screen_length = 0
     for char in s:
-        if '\u0000' <= char <= '\u007F': length += 1  # ASCII 문자 범위            
-        elif '\u0080' <= char <= '\u07FF': length += 2  # 2바이트 문자 범위
-        elif '\u0800' <= char <= '\uFFFF': length += 2  # 3바이트 문자 범위
-        else: length += 2  # 4바이트 문자 범위
-    return length
+        if unicodedata.east_asian_width(char) in ['F', 'W']:
+            screen_length+=2
+        else:
+            screen_length+=1
+    return screen_length
 
 # 문자열을 출력 길이에 맞게 자르는 함수(텍스트박스, 콘솔 출력용)
 def cut_string(s, max_length):
@@ -73,29 +80,35 @@ def on_price_change():
         update_item_availability(i, budget)
 
 # 아이템의 최소 구매량 입력 필드가 변경될 때 호출되는 함수
-def on_limit_change(index,field):
-    '''
-    # 새로운 최소 구매량을 가져옵니다.
+def on_min_change(index):
     new_min = st.session_state.get(f'item_min_{index}', 0)
+    max_val = st.session_state.get(f"item_max_{index}", 0)
+    #에러처리
+    #최소구매개수 * 단가의 총합이 예산을 넘는 경우 0으로 초기화, 에러메시지
+    dot_product = sum(a * b for a, b in zip(min_quantities, item_prices))
+    if dot_product > budget_input:
+        st.session_state[f'item_min__{index}'] = 0
+    #위 조건을 통과한 것 중 최소구매개수가 최대구매값보다 크면, 최대구매값과 일치.
+    elif new_min >max_val:
+        st.session_state[f'item_min_{index}'] = max_val
+    #아니면 패스    
+    
+def on_max_change(index):
     new_max = st.session_state.get(f"item_max_{index}", 0)
-    if field == "min":
-        st.session_state[f'item_max_min_value_{index}'] = new_min
-    elif field == "max":
-        st.session_state[f'item_min_max_value_{index}'] = new_max
-        
-    if new_min==0 and new_max == 0:
-        pass
+    min_val = st.session_state.get(f'item_min_{index}', 0)
+    price_val = st.session_state.get(f'item_price_{index}', 0)
+    budget = st.session_state.get("budget")
+    #에러처리
+    #최댜구매개수 * 단가가 예산을 넘는 경우 가능한 최대값으로 지정, 에러메시지
+    if (price_val * new_max) > budget :
+        st.session_state[f'item_max_{index}'] = budget//price_val
+    #위 조건을 통과한 것 중 최대구매개수가 최소구매값보다 작으면, 최소구매값과 일치.
+    elif min_val > new_max:
+        st.session_state[f'item_max_{index}'] = min_val
+    #아니면 패스    
     
-    # 최소 구매량이 최대 구매량보다 크면, 최대 구매량을 최소 구매량으로 설정합니다.
-    elif new_min > new_max:
-        st.session_state[f"item_max_{index}"] = new_min
-    # item_max의 min_value를 새로운 최소 구매량으로 설정합니다.
- 
-    elif new_min < new_max:
-        st.session_state[f"item_max_{index}"] = new_min
-    # item_min의 max_value를 새로운 최대 구매량으로 설정합니다.
-    
-    '''
+
+    pass
 
 # 예산 계산 함수
 def calculate_budget(budget, labels, prices):
@@ -127,10 +140,10 @@ def calculate_budget(budget, labels, prices):
         text_out += '_' * 18 + '정렬된 데이터'+ '_' * 18 + '\n'
         for n_prt in range(item_count):
             label = cut_string(labels[n_prt], 28)
+            print(label,get_print_length(label))
             if get_print_length(label) < 28:
                 label += ' '
-            text_out += f'품목 #{n_prt + 1:02d} {label}' + (
-                        ' ' * (28 - get_print_length(labels[n_prt]))) + f' $ {prices[n_prt]:6,d} \n'
+            text_out += f'품목 #{n_prt + 1:02d} {label} ' + (' ' * (28 - get_print_length(label))) + f' $ {prices[n_prt]:6,d} \n'
         text_out += '_' * 47 + '\n'
 
         # _____CORE_CALCULATE THE BUDGET
@@ -228,9 +241,13 @@ def calculate_budget(budget, labels, prices):
 # 웹 앱 UI 구현
 st.title("👌알잘딱깔센 예산 0원 만들기")
 
-# 예산 입력란
-budget_input = st.number_input("사용할 예산", min_value=0, key="budget", help="사용해야하는 예산을 입력하세요.",
-                               on_change=on_budget_change, format="%d")
+col_label_budget, col_input_budget = st.columns([2.5,7.5])
+with col_label_budget:
+    st.subheader("사용할 예산")
+with col_input_budget:
+    # 예산 입력란
+    budget_input = st.number_input("사용할 예산", min_value=0, key="budget", help="사용해야하는 예산을 입력하세요.",
+                                on_change=on_budget_change, format="%d", label_visibility='collapsed')
 
 # session_state를 확인하여 물품 개수를 관리합니다.
 if 'item_count' not in st.session_state:
@@ -241,7 +258,7 @@ item_names = []
 item_prices = []
 min_quantities = []
 max_quantities = []
-hcol1, hcol2, hcol3, hcol4, hcol5 = st.columns([2.5, 1, 1, 2, 1])
+hcol1, hcol2, hcol3, hcol4, hcol5 = st.columns([3.5, 1.4, 1.4, 3, 0.7])
 with hcol1: st.write("물품이름")
 with hcol2: st.write("최소구매")
 with hcol3: st.write("최대구매")
@@ -249,7 +266,7 @@ with hcol4: st.write("물품단가")
 with hcol5: st.write("선택")
 
 for i in range(st.session_state.item_count):
-    col1, col2, col3, col4, col5 = st.columns([2.5, 1, 1, 2, 1])
+    col1, col2, col3, col4, col5 = st.columns([3.5, 1.4, 1.4, 3, 0.7])
     # 체크박스가 해제되어 있는지 체크해 입력 필드들을 비활성화를 결정합니다.
     is_disabled = not st.session_state.get(f'item_usable_{i}', True)
     with col1:
@@ -258,7 +275,7 @@ for i in range(st.session_state.item_count):
                                   disabled=is_disabled)
     with col2:
         item_min = st.number_input(f"최소 {i+1}",
-                                   on_change=on_limit_change(i,"min"),
+                                   on_change=on_min_change(i),
                                    min_value=0,
                                    max_value=st.session_state.get(f'item_min_max_value_{i}',),
                                    key=f"item_min_{i}",
@@ -266,7 +283,7 @@ for i in range(st.session_state.item_count):
                                    format="%d", label_visibility='collapsed')
     with col3:
         item_max = st.number_input(f"최대 {i+1}",
-                                   on_change=on_limit_change(i,"max"),
+                                   on_change=on_max_change(i),
                                    min_value=st.session_state.get(f'item_max_min_value_{i}', 0),
                                    key=f"item_max_{i}",
                                    disabled=is_disabled or st.session_state.get(f"item_disabled_{i}", True),  # 여기에 disabled 상태를 적용합니다.
@@ -303,7 +320,7 @@ with col_left:
     if st.button("물품추가", on_click=add_item):
         pass
 
-quantity = 0
+quantity = []
 
 # 계산 버튼 클릭 이벤트 핸들러
 with col_right:
@@ -334,5 +351,3 @@ except:
     pass
 
 st.dataframe(df)
-    
-    
