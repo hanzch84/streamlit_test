@@ -236,11 +236,10 @@ def calculate_budget(budget, labels, prices):
     return text_out, list_header, list_show, prices
 
 # 웹 앱 UI 구현
-st.title("👌알잘딱깔센 예산 쓰기")
-st.subheader("예산 0원 만들기")
+st.title("👌알잘딱깔센 예산 0원 만들기")
 
 # 예산 입력란
-budget_input = st.number_input("예산", min_value=0, key="budget", help="사용해야하는 예산을 입력하세요.",
+budget_input = st.number_input("사용할 예산", min_value=0, key="budget", help="사용해야하는 예산을 입력하세요.",
                                on_change=on_budget_change, format="%d")
 
 # session_state를 확인하여 물품 개수를 관리합니다.
