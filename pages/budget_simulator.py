@@ -115,17 +115,7 @@ def calculate_budget(budget, labels, prices):
 
         case_exact = []  # 잔액 없이 예산을 소진하는 케이스(조합)를 저장하는 리스트
         case_close = []  # 잔액이 남지만 최대한 예산을 소진하는 케이스(조합)를 저장하는 리스트
-        '''
-        # PRINT item list
-        text_out += '_' * 18 + '입력된 데이터'+ '_' * 18 + '\n'
-        for n_prt in range(item_count):
-            label = cut_string(labels[n_prt], 28)
-            if get_print_length(label) < 28:
-                label += ' '
-            text_out += f'품목 #{n_prt + 1:02d} {label}' + (
-                        ' ' * (28 - get_print_length(labels[n_prt]))) + f' $ {prices[n_prt]:6,d} \n'
-        text_out += '_' * 47 + '\n'
-        '''
+        
         # labels와 prices를 결합하여 prices 기준으로 내림차순 정렬
         combined = zip(prices, labels)
         sorted_combined = sorted(combined, reverse=True)
