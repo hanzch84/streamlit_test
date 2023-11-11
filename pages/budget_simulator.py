@@ -62,6 +62,9 @@ def update_item_availability(i, budget):
     if budget > 0 and item_price > 0 and item_price <= budget:
         max_quantity = budget // item_price
         st.session_state[f"item_max_{i}"] = max_quantity
+        st.session_state[f"item_max_max_value_{i}"] = max_quantity
+        st.session_state[f"item_min_min_value_{i}"] = max_quantity
+
         st.session_state[f"item_disabled_{i}"] = False
     else:
         st.session_state[f"item_disabled_{i}"] = True
@@ -91,7 +94,7 @@ def on_min_change(index):
     #위 조건을 통과한 것 중 최소구매개수가 최대구매값보다 크면, 최대구매값과 일치.
     elif new_min >max_val:
         st.session_state[f'item_min_{index}'] = max_val
-    #아니면 패스    
+    #아니면 패스
     
 def on_max_change(index):
     new_max = st.session_state.get(f"item_max_{index}", 0)
