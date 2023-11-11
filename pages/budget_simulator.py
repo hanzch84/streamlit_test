@@ -8,9 +8,6 @@ result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누�
 물품 추가 버튼을 눌러\n물품을 추가할 수도 있고,
 체크 박스의 체크 표시를 해제하면\n잠시 계산에서 제외할 수도 있습니다.
 '''
-result_header =[]
-result_list =[]
-result_prices=[]
 
 # Streamlit 페이지에 CSS를 추가하여 모든 숫자 입력란의 텍스트를 오른쪽으로 정렬합니다.
 st.markdown(
@@ -187,24 +184,13 @@ def calculate_budget(budget, labels, prices):
 
         # _____Print result of the program.
         if len(case_exact) == 0:
-            plural = 's'
-            isare = 'are'
-            if len(case_close) == 1:
-                plural = ''
-                isare = 'is'
             # If there is no perfect case. set the close case list to show.
-            print('There is no way to spend all of     $', format(budget, '7,d'))
-            print('Next best case', plural, ' ', isare, sep='')
             text_out += f'\u00A0{budget:7,d}원의 예산에 맞게 구입할 방법이 없습니다.\n\n'
             text_out += '예산에 근접한 구입 계획은 아래와 같습니다.\n\n'
             list_show = case_close
 
         else:
             # If there are perfect cases. set the exact list to show.
-            plural = 's'
-            if len(case_exact) == 1:
-                plural = ''
-            print('FOUND ', len(case_exact), ' PERFECT case', plural, ' to spend $', format(budget, '7,d'), sep='')
             text_out += f'\u00A0{budget:7,d}원의 예산에 맞는 {len(case_exact)}개의 완벽한 방법을 찾았습니다.\n\n'
             list_show = case_exact
 
@@ -212,10 +198,8 @@ def calculate_budget(budget, labels, prices):
         list_header = []
         text_out += '\u00A0\u00A0'
         for n_title in range(0, item_count):
-            print('#', format(n_title + 1, '02d'), '  ', end='', sep='')
             list_header.append(f'#{n_title + 1:02d}')
             text_out += f'#{n_title + 1:02d}  '
-        print('')
         text_out += '\n'
 
         # List up cases.
@@ -223,13 +207,8 @@ def calculate_budget(budget, labels, prices):
             sum_show = 0
             for n_index, n_itemshow in enumerate(n_caseshow):
                 sum_show += n_itemshow * prices[n_index]
-                print(format(n_itemshow, '3d'), 'EA', sep='', end='')
                 text_out += '\u00A0'*(3-len(str(n_itemshow))) + f'{n_itemshow}EA'
-
-            print('   $', format(sum_show, '7,d'), sep='')
             text_out += '   $' + format(sum_show, '7,d') + '\n'
-
-        print('The program has calculated', case_count + 1, 'cases.')
         text_out += f'이 프로그램은 {case_count + 1}개의 케이스를 계산했습니다.\n'
 
     except:
@@ -237,11 +216,12 @@ def calculate_budget(budget, labels, prices):
         list_header =[]
         list_show =[]
 
-
     # 결과를 리턴
     return text_out, list_header, list_show, prices
 
 # 웹 앱 UI 구현
+result_header, result_list, result_prices = [], [], []
+
 st.title("👌알잘딱깔센 예산 0원 만들기")
 
 col_label_budget, col_input_budget = st.columns([2.5,7.5])
