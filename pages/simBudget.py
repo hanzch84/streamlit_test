@@ -2,15 +2,10 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 
-result_text = '''예산과 단가를 입력한 후
-계산하기 버튼을 누르면,
-예산에 딱 맞게 물건을
-살 수 있는 방법을 찾아줍니다.
-
-물품 추가 버튼을 눌러
-물품을 추가할 수도 있고,
-체크 박스의 체크 표시를 해제하면
-잠시 계산에서 제외할 수도 있습니다.
+result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누르면,
+예산에 딱 맞게 물건을\n살 수 있는 방법을 찾아줍니다.\n
+물품 추가 버튼을 눌러\n물품을 추가할 수도 있고,
+체크 박스의 체크 표시를 해제하면\n잠시 계산에서 제외할 수도 있습니다.
 '''
 result_header =[]
 result_list =[]
@@ -21,32 +16,28 @@ st.markdown(
     """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-
-body, .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput {
-    font-family: 'JetBrains Mono', monospace !important;
-}
-        input[type="number"] {
-        text-align: right;
+        body, .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput {
+            font-family: 'JetBrains Mono', monospace !important;}
+        /* 텍스트 영역의 클래스 이름을 기반으로 스타일 지정 */
+        textarea[aria-label="Results"]{
+        font-family: JetBrains Mono, sans-serif; /* 원하는 폰트로 변경 */
+        font-size: 12px; /* 폰트 크기 설정 */
         }
+        input[type="number"] {text-align: right;}
     </style>
-    """,
-    unsafe_allow_html=True
-)
+    """, unsafe_allow_html=True)
 
-# 문자열의 출력 길이를 구하는 함수
+# 문자열의 출력 길이를 구하는 함수(텍스트박스, 콘솔 출력용)
 def get_print_length(s):
     length = 0
     for char in s:
-        if '\u0000' <= char <= '\u007F':  # ASCII 문자 범위
-            length += 1
-        elif '\u0080' <= char <= '\u07FF':  # 2바이트 문자 범위
-            length += 2
-        elif '\u0800' <= char <= '\uFFFF':  # 3바이트 문자 범위
-            length += 2
-        else:
-            length += 2  # 4바이트 문자 범위
+        if '\u0000' <= char <= '\u007F': length += 1  # ASCII 문자 범위            
+        elif '\u0080' <= char <= '\u07FF': length += 2  # 2바이트 문자 범위
+        elif '\u0800' <= char <= '\uFFFF': length += 2  # 3바이트 문자 범위
+        else: length += 2  # 4바이트 문자 범위
     return length
 
+# 문자열을 출력 길이에 맞게 자르는 함수(텍스트박스, 콘솔 출력용)
 def cut_string(s, max_length):
     cut_s = ''
     length = 0
@@ -58,7 +49,7 @@ def cut_string(s, max_length):
         length += char_length
     return cut_s
 
-# 아이템 활성화/비활성화 업데이트 함수
+# 아이템 활성화/비활성화 업데이트 함수(스트림릿 위젯 제어용)
 def update_item_availability(i, budget):
     item_price = st.session_state.get(f"item_price_{i}", 0)
     if budget > 0 and item_price > 0 and item_price <= budget:
@@ -109,34 +100,32 @@ def on_limit_change(index,field):
 # 예산 계산 함수
 def calculate_budget(budget, labels, prices):
     try:
-        text_out = ""
-        text_out += f'Your budget to spend out is ${budget:d}\n'
-  
-        quantity = [0] * len(labels)  # Set the List to count the quantity of Each Items.
-        balances = [0] * len(labels)  # Set the List to save left budget after spend (each item * quantity)
+        text_out = f'사용해야 할 예산은 {budget:d}원입니다.\n'
 
-        is_overrun = False  # It checks budget over error.
+        item_count = len(prices)  # 계산해야 할 물품의 종류가 몇 개인지 저장합니다.
+        quantity = [0] * item_count  # 각 아이템을 몇 개 살 건지 저장한느 리스트입니다.
+        balances = [0] * item_count  # 각 아이템을 개수만큼 사고 난 뒤 남은 예산의 상태를 기록할 리스트입니다.
 
-        item_length = len(prices)  # check the numbers of item to calculate.
-        last_node = item_length - 2  # is the end of node we change quantity manually.
-        last_index = item_length - 1  # is the last number of list index
-        node = last_node  # node number sets to node_end(default position)
+        last_index = item_count - 1  # 마지막 인덱스 번호를 아이템 개수-1로 정합니다.
+        last_node = item_count - 2  # 순차적으로 조작할 마지막 노드를 아이템 개수 -2로 정합니다.(제일 마지막 노드는 '남은 예산/단가'공식으로 해결)
+        node = last_node  # 노드(물품 개수 리스트의 기록 위치) 넘버를 마지막 노드에 위치시킵니다.
 
-        case_count = 0  # counts how many cases we checked.
+        is_overrun = False  # 예산을 초과하는지 상태를 체크합니다.
+        case_count = 0  # 얼마나 많은 케이스를 검토했는지 체크하는 변수(연산량 확인용)
 
-        case_exact = []  # stores the case with no balance.
-        case_close = []  # stores the case with balance.
-
+        case_exact = []  # 잔액 없이 예산을 소진하는 케이스(조합)를 저장하는 리스트
+        case_close = []  # 잔액이 남지만 최대한 예산을 소진하는 케이스(조합)를 저장하는 리스트
+        '''
         # PRINT item list
-        text_out += '_' * 17 + '입력된 데이터'+ '_' * 17 + '\n'
-        for n_prt in range(item_length):
+        text_out += '_' * 18 + '입력된 데이터'+ '_' * 18 + '\n'
+        for n_prt in range(item_count):
             label = cut_string(labels[n_prt], 28)
             if get_print_length(label) < 28:
                 label += ' '
             text_out += f'품목 #{n_prt + 1:02d} {label}' + (
                         ' ' * (28 - get_print_length(labels[n_prt]))) + f' $ {prices[n_prt]:6,d} \n'
         text_out += '_' * 47 + '\n'
-
+        '''
         # labels와 prices를 결합하여 prices 기준으로 내림차순 정렬
         combined = zip(prices, labels)
         sorted_combined = sorted(combined, reverse=True)
@@ -145,8 +134,8 @@ def calculate_budget(budget, labels, prices):
         prices, labels = zip(*sorted_combined)
 
         # 내림차순 정렬된 아이템 데이터를 출력
-        text_out += '_' * 17 + '정렬된 데이터'+ '_' * 17 + '\n'
-        for n_prt in range(item_length):
+        text_out += '_' * 18 + '정렬된 데이터'+ '_' * 18 + '\n'
+        for n_prt in range(item_count):
             label = cut_string(labels[n_prt], 28)
             if get_print_length(label) < 28:
                 label += ' '
@@ -154,9 +143,8 @@ def calculate_budget(budget, labels, prices):
                         ' ' * (28 - get_print_length(labels[n_prt]))) + f' $ {prices[n_prt]:6,d} \n'
         text_out += '_' * 47 + '\n'
 
-        # _____CORE
+        # _____CORE_CALCULATE THE BUDGET
         while not (node == -1 and is_overrun == True):
-            # CALCULATE THE BUDGET
             # Set the left money after buy first item to left[0] according to list qnty[0]
             balances[0] = budget - (quantity[0] * prices[0])
             # Set the left money after buy items to left[n] according to list qnty[n]
@@ -217,7 +205,7 @@ def calculate_budget(budget, labels, prices):
         # Print the title of List.
         list_header = []
         text_out += '\u00A0\u00A0'
-        for n_title in range(0, item_length):
+        for n_title in range(0, item_count):
             print('#', format(n_title + 1, '02d'), '  ', end='', sep='')
             list_header.append(f'#{n_title + 1:02d}')
             text_out += f'#{n_title + 1:02d}  '
@@ -262,6 +250,8 @@ if 'item_count' not in st.session_state:
 # 아이템 섹션 생성 반복문
 item_names = []
 item_prices = []
+min_quantities = []
+max_quantities = []
 hcol1, hcol2, hcol3, hcol4, hcol5 = st.columns([2.5, 1, 1, 2, 1])
 with hcol1: st.write("물품이름")
 with hcol2: st.write("최소구매")
@@ -310,6 +300,8 @@ for i in range(st.session_state.item_count):
     if item_usable and item_price > 0:
         item_names.append(item_name if item_name else '')
         item_prices.append(item_price)
+        min_quantities.append(item_min)
+        max_quantities.append(item_min)
 
 col_left, col_right = st.columns(2)
 
