@@ -9,7 +9,9 @@ result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누�
 체크 박스의 체크 표시를 해제하면\n잠시 계산에서 제외할 수도 있습니다.
 '''
 
-# Streamlit 페이지에 CSS를 추가하여 모든 숫자 입력란의 텍스트를 오른쪽으로 정렬합니다.
+# ＊스타일 구역＊ Streamlit 페이지에 CSS를 추가
+# 모든 숫자 입력란의 텍스트를 오른쪽으로 정렬합니다.
+# 폰트 및 크기 설정
 st.markdown(
     """
     <style>
@@ -18,7 +20,7 @@ st.markdown(
             font-family: 'JetBrains Mono', monospace !important;}
         /* 텍스트 영역의 클래스 이름을 기반으로 스타일 지정 */
         textarea[aria-label="Results"]{
-        font-family: JetBrains Mono, sans-serif; /* 원하는 폰트로 변경 */
+        font-family: JetBrains Mono, monospace; /* 원하는 폰트로 변경 */
         font-size: 12px; /* 폰트 크기 설정 */
         }
         input[type="number"] {
@@ -31,6 +33,7 @@ st.markdown(
     </style>
     """, unsafe_allow_html=True)
 
+# ＊함수 구역＊
 # 문자열의 출력 길이를 구하는 함수(텍스트박스, 콘솔 출력용)
 def get_print_length(s):
     screen_length = 0
@@ -41,7 +44,7 @@ def get_print_length(s):
             screen_length+=1
     return screen_length
 
-# 문자열을 출력 길이에 맞게 자르는 함수(텍스트박스, 콘솔 출력용)
+# (수정중)문자열을 출력 길이에 맞게 자르는 함수(텍스트박스, 콘솔 출력용)
 def cut_string(s, max_length):
     cut_s = ''
     length = 0
@@ -61,7 +64,6 @@ def update_item_availability(i, budget):
         st.session_state[f"item_max_{i}"] = max_quantity
         st.session_state[f"item_max_max_value_{i}"] = max_quantity
         st.session_state[f"item_min_min_value_{i}"] = max_quantity
-
         st.session_state[f"item_disabled_{i}"] = False
     else:
         st.session_state[f"item_disabled_{i}"] = True
@@ -107,11 +109,8 @@ def on_max_change(index):
         st.session_state[f'item_max_{index}'] = min_val
     #아니면 패스    
     
-
-    pass
-
 # 예산 계산 함수
-def calculate_budget(budget, labels, prices):
+def calculate_budget(budget, labels, prices, minis, maxis):
     try:
         text_out = f'사용해야 할 예산은 {budget:d}원입니다.\n'
 
@@ -130,20 +129,19 @@ def calculate_budget(budget, labels, prices):
         case_close = []  # 잔액이 남지만 최대한 예산을 소진하는 케이스(조합)를 저장하는 리스트
         
         # labels와 prices를 결합하여 prices 기준으로 내림차순 정렬
-        combined = zip(prices, labels)
+        combined = zip(prices, labels, minis, maxis)
         sorted_combined = sorted(combined, reverse=True)
 
         # 정렬된 데이터를 다시 분리
-        prices, labels = zip(*sorted_combined)
+        prices, labels, minis, maxis = zip(*sorted_combined)
 
         # 내림차순 정렬된 아이템 데이터를 출력
         text_out += '_' * 18 + '정렬된 데이터'+ '_' * 18 + '\n'
         for n_prt in range(item_count):
             label = cut_string(labels[n_prt], 28)
-            print(label,get_print_length(label))
             if get_print_length(label) < 28:
                 label += ' '
-            text_out += f'품목 #{n_prt + 1:02d} {label} ' + (' ' * (28 - get_print_length(label))) + f' $ {prices[n_prt]:6,d} \n'
+            text_out += f"품목 #{n_prt + 1:02d} {label} {' ' * (28 - get_print_length(label))} $ {prices[n_prt]:7,d} ({minis[n_prt]}~{maxis[n_prt]})\n"
         text_out += '_' * 47 + '\n'
 
         # _____CORE_CALCULATE THE BUDGET
@@ -314,7 +312,7 @@ with col_right:
         elif max(item_prices) > budget_input: result_text = '예산이 부족합니다.'
         else:
             # 계산 결과를 구합니다.
-            result_text, result_header,result_list, result_prices = calculate_budget(budget_input, item_names, item_prices)
+            result_text, result_header,result_list, result_prices = calculate_budget(budget_input, item_names, item_prices,min_quantities,max_quantities)
 st.text_area("Results", result_text, height=300)
 
 

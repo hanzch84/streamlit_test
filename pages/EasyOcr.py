@@ -3,6 +3,9 @@ import easyocr
 import cv2
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
+
+st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
+
 ocr_text=[]
 def ocr_label(image_data,lang,font_color):
     font_path = 'pages/D2Coding-Ver1.3.2-20180524.ttf'
@@ -36,9 +39,6 @@ def ocr_label(image_data,lang,font_color):
 
     st.image(image, channels="BGR")
     return result
-st.title("Easy OCR 카메라")
-# 멀티선택
-
 
 def hex_to_rgb(hex_color):
     # 앞의 '#' 기호를 제거합니다.
@@ -51,25 +51,29 @@ def hex_to_rgb(hex_color):
 
 get_language_codes = lambda names, d: list(map(d.get, filter(d.__contains__, names)))
 
-# 예제 딕셔너리
-language_dict = {
-    "한국어": "ko",
-    "영어": "en",
-}
+# 페이지 랜더링
+st.title("Easy OCR 카메라")
 
-font_color = hex_to_rgb(st.color_picker('Pick a color',))
-st.write(font_color)
-
-# 함수 호출 및 결과 출력
+# 딕셔너리
+language_dict = {"한국어": "ko", "영어": "en"}
 
 # 라디오 버튼
-radio_option = st.radio("당신의 선택은?", ["한국어, 영어","한국어","영어"])
-st.write(f"당신은 {radio_option}을(를) 선택하셨습니다.")
+radio_option = st.radio("언어설정", ["한국어, 영어","한국어","영어"])
+st.write(f"{radio_option} 선택됨.")
+
 if radio_option=="한국어, 영어":
     radio_option=["한국어", "영어"]
 languages_selected = get_language_codes(radio_option, language_dict)
 
-picture = st.camera_input("#사진을 찍으면 문자를 인식해요!")
+radio_cam_option = st.radio("카메라 촬영 vs 파일 업로드", ["파일 업로드", "카메라 촬영"])
+
+font_color = hex_to_rgb(st.color_picker('폰트 색상을 지정하세요.','#FF0000'))
+
+if radio_cam_option == "카메라 촬영":
+    picture = st.camera_input("#사진을 찍으면 문자를 인식해요!")
+else:
+    picture = st.file_uploader('이미지를 업로드 하세요.', type=['png', 'jpg', 'jpeg'])
+
 if picture is not None:
     if radio_option.__len__() != 0:
         
