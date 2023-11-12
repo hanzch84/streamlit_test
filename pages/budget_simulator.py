@@ -96,6 +96,10 @@ def on_min_change(index):
     dot_product = sum(a * b for a, b in zip(minis_now, prices_now))
     if dot_product > budget_input:
         st.session_state[f'item_min_{index}'] = 0
+        minis_now,prices_now = [],[]
+        for ii in range(st.session_state.item_count):
+            minis_now.append(st.session_state.get(f'item_min_{ii}', 0))
+            prices_now.append(st.session_state.get(f'item_price_{ii}', 0))
     #위 조건을 통과한 것 중 최소구매개수가 최대구매값보다 크면, 최대구매값과 일치.
     elif new_min >max_val:
         st.session_state[f'item_min_{index}'] = max_val
@@ -308,7 +312,8 @@ with col_left:
         pass
 
 with col_label_fixed:
-    st.write(sum(a * b for a, b in zip(min_quantities, item_prices)))
+    fixed_budget = sum(a * b for a, b in zip(min_quantities, item_prices))
+    st.write(f"확정:{fixed_budget}    가용액: {budget_input - fixed_budget}")
 
 quantity = []
 
