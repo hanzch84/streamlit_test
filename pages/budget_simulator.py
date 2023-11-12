@@ -83,11 +83,15 @@ def on_price_change():
 
 # 아이템의 최소 구매량 입력 필드가 변경될 때 호출되는 함수
 def on_min_change(index):
+    minis_now = []
+    for i in st.session_state.item_count:
+        minis_now.append(st.session_state.get(f'item_min_{i}', 0))
+    st.session_state.get(f'item_min_{index}', 0)
     new_min = st.session_state.get(f'item_min_{index}', 0)
     max_val = st.session_state.get(f"item_max_{index}", 0)
     #에러처리
     #최소구매개수 * 단가의 총합이 예산을 넘는 경우 0으로 초기화, 에러메시지
-    dot_product = sum(a * b for a, b in zip(min_quantities, item_prices))
+    dot_product = sum(a * b for a, b in zip(minis_now, item_prices))
     if dot_product > budget_input:
         st.session_state[f'item_min__{index}'] = 0
     #위 조건을 통과한 것 중 최소구매개수가 최대구매값보다 크면, 최대구매값과 일치.
