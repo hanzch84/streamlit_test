@@ -290,7 +290,7 @@ for i in range(st.session_state.item_count):
         min_quantities.append(item_min)
         max_quantities.append(item_min)
 
-col_left, col_right = st.columns(2)
+col_left,col_label_fixed, col_right = st.columns(3)
 
 # 물품추가 버튼 클릭 시 호출되는 함수
 def add_item():
@@ -301,7 +301,12 @@ with col_left:
     if st.button("물품추가", on_click=add_item):
         pass
 
+with col_label_fixed:
+    st.write(sum(a * b for a, b in zip(min_quantities, item_prices)))
+
 quantity = []
+
+
 
 # 계산 버튼 클릭 이벤트 핸들러
 with col_right:
