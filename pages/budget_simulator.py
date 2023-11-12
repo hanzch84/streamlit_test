@@ -92,8 +92,8 @@ def on_min_change(index):
     #에러처리
     #최소구매개수 * 단가의 총합이 예산을 넘는 경우 0으로 초기화, 에러메시지
     dot_product = sum(a * b for a, b in zip(minis_now, item_prices))
-    if dot_product > budget_input:
-        st.session_state[f'item_min__{index}'] = 0
+    if dot_product > st.session_state.get('budget', 0):
+        st.session_state[f'item_min_{index}'] = 0
     #위 조건을 통과한 것 중 최소구매개수가 최대구매값보다 크면, 최대구매값과 일치.
     elif new_min >max_val:
         st.session_state[f'item_min_{index}'] = max_val
