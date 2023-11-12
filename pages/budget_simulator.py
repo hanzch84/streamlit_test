@@ -84,8 +84,8 @@ def on_price_change():
 # 아이템의 최소 구매량 입력 필드가 변경될 때 호출되는 함수
 def on_min_change(index):
     minis_now = []
-    for i in st.session_state.item_count:
-        minis_now.append(st.session_state.get(f'item_min_{i}', 0))
+    for ii in range(st.session_state.item_count):
+        minis_now.append(st.session_state.get(f'item_min_{ii}', 0))
     st.session_state.get(f'item_min_{index}', 0)
     new_min = st.session_state.get(f'item_min_{index}', 0)
     max_val = st.session_state.get(f"item_max_{index}", 0)
