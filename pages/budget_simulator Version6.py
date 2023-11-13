@@ -78,25 +78,30 @@ def on_price_change():
 
 # 아이템의 최소 구매량 입력 필드가 변경될 때 호출되는 함수
 def on_min_change(index):
-    minis_now,prices_now = [],[]
-    for ii in range(st.session_state.item_count):
-        minis_now.append(st.session_state.get(f'item_min_{ii}', 0))
-        prices_now.append(st.session_state.get(f'item_price_{ii}', 0))
-    st.session_state.get(f'item_min_{index}', 0)
-    new_min = st.session_state.get(f'item_min_{index}', 0)
-    max_val = st.session_state.get(f"item_max_{index}", 0)
-    #에러처리
-    #최소구매개수 * 단가의 총합이 예산을 넘는 경우 0으로 초기화, 에러메시지
-    dot_product = sum(a * b for a, b in zip(minis_now, prices_now))
-    if dot_product > budget_input:
-        st.session_state[f'item_min_{index}'] = 0
-        minis_now,prices_now = [],[]
-        for ii in range(st.session_state.item_count):
-            minis_now.append(st.session_state.get(f'item_min_{ii}', 0))
-            prices_now.append(st.session_state.get(f'item_price_{ii}', 0))
-    #위 조건을 통과한 것 중 최소구매개수가 최대구매값보다 크면, 최대구매값과 일치.
-    elif new_min >max_val:
-        st.session_state[f'item_min_{index}'] = max_val
+    # 현재 아이템의 최소, 최대 구매량 및 단가 가져오기
+    current_min = st.session_state.get(f'item_min_{index}', 0)
+    current_max = st.session_state.get(f'item_max_{index}', 0)
+    current_price = st.session_state.get(f'item_price_{index}', 0)
+
+    # 모든 아이템에 대해 최소 구매량과 단가를 곱한 총액 계산
+    total_cost = sum(
+        st.session_state.get(f'item_min_{i}', 0) * st.session_state.get(f'item_price_{i}', 0) 
+        for i in range(st.session_state.item_count)
+    )
+
+    # 예산 초과 시 조정
+    if total_cost > budget_input:
+        # 예산 초과분 계산
+        over_budget = total_cost - budget_input
+
+        # 현재 아이템의 구매량을 줄여서 예산을 맞추기
+        reduce_by = min(current_min, (over_budget + current_price - 1) // current_price)
+        new_min = current_min - reduce_by
+        st.session_state[f'item_min_{index}'] = new_min
+
+    # 최소 구매량이 최대 구매량을 초과하는 경우 조정
+    elif current_min > current_max:
+        st.session_state[f'item_min_{index}'] = current_max
     
 def on_max_change(index):
     new_max = st.session_state.get(f"item_max_{index}", 0)
@@ -117,7 +122,7 @@ def calculate_budget(budget, labels, prices, minis, maxis):
         text_out = f'사용해야 할 예산은 {format(budget,",")}원입니다.\n'
 
         item_count = len(prices)  # 계산해야 할 물품의 종류가 몇 개인지 저장합니다.
-        quantity = [0] * item_count  # 각 아이템을 몇 개 살 건지 저장한느 리스트입니다.
+        quantity = minis  # 각 아이템을 몇 개 살 건지 저장하는 리스트입니다.
         balances = [0] * item_count  # 각 아이템을 개수만큼 사고 난 뒤 남은 예산의 상태를 기록할 리스트입니다.
         last_index = item_count - 1  # 마지막 인덱스 번호를 아이템 개수-1로 정합니다.
         last_node = item_count - 2  # 순차적으로 조작할 마지막 노드를 아이템 개수 -2로 정합니다.(제일 마지막 노드는 '남은 예산/단가'공식으로 해결)
