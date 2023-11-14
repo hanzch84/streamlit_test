@@ -7,6 +7,7 @@ result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누�
 예산에 딱 맞게 물건을\n살 수 있는 방법을 찾아줍니다.\n
 물품 추가 버튼을 눌러\n물품을 추가할 수도 있고,
 체크 박스의 체크 표시를 해제하면\n잠시 계산에서 제외할 수도 있습니다.
+***최대구매 제한은 아직 불가능합니다.(알고리즘 추가 중)***
 '''
 # ＊스타일 구역＊ Streamlit 페이지에 CSS를 추가
 # 모든 숫자 입력란의 텍스트를 오른쪽으로 정렬합니다.
@@ -19,6 +20,7 @@ st.markdown(
             font-family: 'Nanum Gothic Coding', monospace !important;}
         /* 텍스트 영역의 클래스 이름을 기반으로 스타일 지정 */
         input[type="number"] {text-align: right;}
+        h1{text-align: center;}
         input[type="number"], textarea[aria-label="Results"], p, input[type="text"] {
             font-family: Nanum Gothic Coding, monospace; /* 원하는 폰트로 변경 */
             font-size: 16px; /* 폰트 크기 설정 */}
@@ -141,6 +143,16 @@ def calculate_budget(budget, labels, prices, minis, maxis):
             text_out += f"품목 #{n_prt + 1:02d} {label} = {prices[n_prt]:7,d} 원({minis[n_prt]:3d} ~ {maxis[n_prt]:3d})\n"
         text_out += '_' * 61 + '\n'
 
+        # 기본 구매량을 구매한 후 남는 예산을 예산으로 잡고 전 예산을 저장합니다.
+        total_budget = budget
+        fixed_budget = sum(a * b for a, b in zip(minis, prices))
+        budget -= fixed_budget
+
+        # 최대 개수에 대해 마지막 바로 앞 노드에서 잔액이 최대치보다 클 경우: 마지막 노드는 최대치만큼 먼저 구입하고 잔액/ 마지막 바로 앞 노드의 단가로 갯수 결정
+        # 각 노드에서 최대치를 넘었는지 검사.
+
+
+
         # _____CORE_CALCULATE THE BUDGET
         while not (node == -1 and is_overrun == True):
             # Set the left money after buy first item to left[0] according to list qnty[0]
@@ -149,7 +161,7 @@ def calculate_budget(budget, labels, prices, minis, maxis):
             for n in range(1, last_index):
                 balances[n] = balances[n - 1] - (quantity[n] * prices[n])
             # With the left money, calculates How many items(Last one) can be bought.
-            quantity[last_index] = int(balances[last_index - 1] / prices[last_index])
+            quantity[last_index] = balances[last_index - 1] // prices[last_index]
             balances[last_index] = balances[last_index - 1] - (quantity[last_index] * prices[last_index])
 
             #  CHECK ERROR(Over Purchasing)
@@ -179,13 +191,18 @@ def calculate_budget(budget, labels, prices, minis, maxis):
 
         # 계산 결과 출력 부분
         if len(case_exact) == 0: # 완벽한 결과가 없으면 근사치 리스트를 결과로 설정
-            text_out += f'{budget:,d}원의 예산에 맞게 구입할 방법이 없습니다.\n'
+            text_out += f'{total_budget:,d}원의 예산에 맞게 구입할 방법이 없습니다.\n'
             text_out += '예산에 근접한 구입 계획은 아래와 같습니다.\n'
             list_show = case_close
 
         else: # 완벽한 결과가 있으면 결과로 설정
-            text_out += f'{budget:7,d}원의 예산에 맞는 {len(case_exact):,d}개의 완벽한 방법을 찾았습니다.\n'
+            text_out += f'{total_budget:7,d}원의 예산에 맞는 {len(case_exact):,d}개의 완벽한 방법을 찾았습니다.\n'
             list_show = case_exact
+        
+        # 모든 행에 더하기
+        list_show = (np.array(list_show) + np.array(minis)).tolist()
+
+
 
         # 헤더 출력
         list_header = []
@@ -206,12 +223,12 @@ def calculate_budget(budget, labels, prices, minis, maxis):
         return text_out, list_header, list_show, prices # 결과를 리턴
 
     except:
-        return '에러입니다.', [], [] # 에러 처리된 결과를 리턴
+        return '에러입니다.', [], [], prices # 에러 처리된 결과를 리턴
 
 # 웹 앱 UI 구현
 result_header, result_list, result_prices = [], [], []
 
-st.title("👌알잘딱깔센 예산 0원 만들기")
+st.title("👌알잘딱깔센 예산 0원 만들기😊")
 
 col_label_budget, col_input_budget = st.columns([2.5,7.5])
 with col_label_budget:
@@ -294,16 +311,18 @@ with col_left:
 
 with col_label_fixed:
     fixed_budget = sum(a * b for a, b in zip(min_quantities, item_prices))
-    st.write(f"확정: {fixed_budget:,d}원(남은 예산: {(budget_input - fixed_budget):,d}원)")
+    max_limit= sum(a * b for a, b in zip(max_quantities, item_prices))
+    st.write(f"확정: {fixed_budget:,d}원(남은 예산: {(budget_input - fixed_budget):,d}원) 구매제한: {max_limit:,d}원")
 
 #quantity = []
 # 계산 버튼 클릭 이벤트 핸들러
 with col_right:
     if st.button("계산하기"):
         if budget_input == "" or budget_input <= 0: result_text = '예산을 정확히 입력하세요.'
-        elif len(item_prices) == 0: result_text = '단가를 입력하세요.'
+        elif len(item_prices) <= 1: result_text = '최소 2종류 이상의 단가를 입력하세요.'
         elif min(item_prices) <= 0: result_text = '단가가 0보다 작거나 같습니다.'
         elif max(item_prices) > budget_input: result_text = '예산이 부족합니다.'
+        elif max_limit < budget_input: result_text = '최대구매가 예산보다 작아 예산을 쓸 수 없습니다.'
         else:
             # 스피너를 표시하면서 계산 진행
             with st.spinner('계산 중...'):
