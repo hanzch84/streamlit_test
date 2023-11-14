@@ -5,6 +5,8 @@ import unicodedata
 
 result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누르면,
 예산에 딱 맞게 물건을\n살 수 있는 방법을 찾아줍니다.\n
+물품 이름은 안 쓰셔도 작동합니다.
+단가가 0인 품목은 자동으로 제외합니다.\n
 물품 추가 버튼을 눌러\n물품을 추가할 수도 있고,
 체크 박스의 체크 표시를 해제하면\n잠시 계산에서 제외할 수도 있습니다.
 ***최대구매 제한은 아직 불가능합니다.(알고리즘 추가 중)***
@@ -79,39 +81,42 @@ def on_price_change():
         update_item_availability(i, budget)
 
 # 아이템의 최소 구매량 입력 필드가 변경될 때 호출되는 함수
-def on_min_change(index):
-    minis_now,prices_now = [],[]
-    for ii in range(st.session_state.item_count):
-        minis_now.append(st.session_state.get(f'item_min_{ii}', 0))
-        prices_now.append(st.session_state.get(f'item_price_{ii}', 0))
-    st.session_state.get(f'item_min_{index}', 0)
-    new_min = st.session_state.get(f'item_min_{index}', 0)
-    max_val = st.session_state.get(f"item_max_{index}", 0)
-    #에러처리
-    #최소구매개수 * 단가의 총합이 예산을 넘는 경우 0으로 초기화, 에러메시지
-    dot_product = sum(a * b for a, b in zip(minis_now, prices_now))
-    if dot_product > budget_input:
-        st.session_state[f'item_min_{index}'] = 0
-        minis_now,prices_now = [],[]
-        for ii in range(st.session_state.item_count):
-            minis_now.append(st.session_state.get(f'item_min_{ii}', 0))
-            prices_now.append(st.session_state.get(f'item_price_{ii}', 0))
-    #위 조건을 통과한 것 중 최소구매개수가 최대구매값보다 크면, 최대구매값과 일치.
-    elif new_min >max_val:
-        st.session_state[f'item_min_{index}'] = max_val
+def on_min_change(index,min_quantities,item_prices):
+    # 현재 아이템의 최소, 최대 구매량 및 단가 가져오기
+    current_min = st.session_state.get(f'item_min_{index}', 0)
+    current_max = st.session_state.get(f'item_max_{index}', 0)
+    current_price = st.session_state.get(f'item_price_{index}', 0)
+    budget_input = st.session_state.get("budget")
+
+    # 모든 아이템에 대해 최소 구매량과 단가를 곱한 총액 계산
+    total_min_cost = sum(a * b for a, b in zip(min_quantities, item_prices))
+
+    # 예산 초과 시 조정
+    if total_min_cost > budget_input and current_price!=0:
+        # 예산 초과분 계산
+        over_budget = total_min_cost - budget_input
+
+        # 현재 아이템의 구매량을 줄여서 예산을 맞추기
+        reduce_by = min(current_min, (over_budget + current_price - 1) // current_price)
+        new_min = current_min - reduce_by
+        st.session_state[f'item_min_{index}'] = new_min
+
+    # 최소 구매량이 최대 구매량을 초과하는 경우 조정
+    elif current_min > current_max:
+        st.session_state[f'item_min_{index}'] = current_max
     
 def on_max_change(index):
-    new_max = st.session_state.get(f"item_max_{index}", 0)
-    min_val = st.session_state.get(f'item_min_{index}', 0)
-    price_val = st.session_state.get(f'item_price_{index}', 0)
+    current_max = st.session_state.get(f"item_max_{index}", 0)
+    current_min = st.session_state.get(f'item_min_{index}', 0)
+    current_price = st.session_state.get(f'item_price_{index}', 0)
     budget = st.session_state.get("budget")
     #에러처리
     #최댜구매개수 * 단가가 예산을 넘는 경우 가능한 최대값으로 지정, 에러메시지
-    if (price_val * new_max) > budget :
-        st.session_state[f'item_max_{index}'] = budget//price_val
+    if (current_price * current_max) > budget :
+        st.session_state[f'item_max_{index}'] = budget//current_price
     #위 조건을 통과한 것 중 최대구매개수가 최소구매값보다 작으면, 최소구매값과 일치.
-    elif min_val > new_max:
-        st.session_state[f'item_max_{index}'] = min_val
+    elif current_min > current_max:
+        st.session_state[f'item_max_{index}'] = current_min
     
 # 예산 계산 함수
 def calculate_budget(budget, labels, prices, minis, maxis):
@@ -264,7 +269,7 @@ for i in range(st.session_state.item_count):
                                   disabled=is_disabled)
     with col2:
         item_min = st.number_input(f"최소 {i+1}",
-                                   on_change=on_min_change(i),
+                                   on_change=on_min_change(i,min_quantities,item_prices),
                                    min_value=0,
                                    max_value=st.session_state.get(f'item_min_max_value_{i}',),
                                    key=f"item_min_{i}",
@@ -323,6 +328,7 @@ with col_right:
         elif min(item_prices) <= 0: result_text = '단가가 0보다 작거나 같습니다.'
         elif max(item_prices) > budget_input: result_text = '예산이 부족합니다.'
         elif max_limit < budget_input: result_text = '최대구매가 예산보다 작아 예산을 쓸 수 없습니다.'
+        elif fixed_budget > budget_input: result_text = '최소구매가 예산보다 많아 예산을 쓸 수 없습니다.'
         else:
             # 스피너를 표시하면서 계산 진행
             with st.spinner('계산 중...'):
