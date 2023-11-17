@@ -22,13 +22,16 @@ st.markdown(
             font-family: 'Nanum Gothic Coding', monospace !important;}
         /* 텍스트 영역의 클래스 이름을 기반으로 스타일 지정 */
         input[type="number"] {text-align: right;}
+        input[type="checkbox"] {margin: -10px;}
         h1{text-align: center;}
         input[type="number"], textarea[aria-label="Results"], p, input[type="text"] {
             font-family: Nanum Gothic Coding, monospace; /* 원하는 폰트로 변경 */
-            font-size: 16px; /* 폰트 크기 설정 */
-            margin-top: -5px; /* 행간 간격을 줄입니다 */}
+            font-size: 14px; /* 폰트 크기 설정 */
+            }
+        input[type="number"], textarea[aria-label="Results"],input[type="text"] {
+            margin: -5px; /* 행간 간격을 줄입니다 */}
         [data-testid="stVerticalBlock"] > div:first-child {
-        margin: -5px; /* 간격 조정 */
+        margin: -8px; /* 간격 조정 */
     }
         [data-testid="stHorizontalBlock"]{}
         textarea[aria-label="Results"]{color: #FFC83D;}
@@ -160,31 +163,26 @@ def calculate_budget(budget, labels, prices, basics, limits):
         #최소 구매량을 뺀 최대 구매 개수를 구합니다.
         limits = (np.array(limits) - np.array(basics)).tolist()
 
-        # 최대 개수에 대해 마지막 바로 앞 노드에서 잔액이 최대치보다 클 경우: 마지막 노드는 최대치만큼 먼저 구입하고 잔액/ 마지막 바로 앞 노드의 단가로 갯수 결정
-        # 각 노드에서 최대치를 넘었는지 검사.
-
-
-
         # _____CORE_CALCULATE THE BUDGET
         while not (node == -1 and is_overrun == True):
             # quantity[0]의 아이템 개수에 따라 첫 물품의 단가만큼 예산에서 빼고 balances[0] 에 저장합니다.
-            balances[0] = budget - (quantity[0] * prices[0])
+            balances[-1] = budget
             # quantity[n]의 아이템 개수에 따라 첫 물품의 단가만큼 예산에서 빼고 balances[0] 에 저장합니다.Set the left money after buy items to left[n] according to list qnty[n]
-            for n in range(1, last_index):
+            for n in range(0, last_index):
                 balances[n] = balances[n - 1] - (quantity[n] * prices[n])
             # With the left money, calculates How many items(Last one) can be bought.
             quantity[last_index] = balances[last_index - 1] // prices[last_index]
             balances[last_index] = balances[last_index - 1] - (quantity[last_index] * prices[last_index])
 
-            #  CHECK ERROR(Over Purchasing)
-            #  IF ERROR occurs reset current node's 'qnty'(quantity) to 0.
-            # and node up to count up upper node item's 'qnty'(quantity).
+            # CHECK ERROR(Over Purchasing)
+            # IF ERROR occurs reset current node's quantity to 0.
+            # and node up to count up upper node item's quantity.
             if any([i < 0 for i in balances]):
                 is_overrun = True
                 quantity[node] = 0
                 node -= 1
 
-            #  IF there is no ERROR, Set over to False.
+            # IF there is no ERROR, Set over to False.
             # and reset node to the end(index of just before the last item in the list)
             else:
                 is_overrun = False
