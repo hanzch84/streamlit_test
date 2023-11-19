@@ -221,9 +221,12 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
                 # 예산이 정확히 맞는 경우(balances의 마지막 항목이 0), case_exact 리스트에 결과를 추가합니다.
                 if (balances[last_index] == 0):
                     cases_exact.append(list(quantities))
+                    print(cases_exact,quantities)
                 #예산이 남는 경우, case_close 리스트에 결과를 추가합니다.
                 elif (balances[last_index] > 0) and (balances[last_index] < prices[last_index]):
-                    cases_close.append(list(quantities))            
+                    cases_close.append(list(quantities))
+                    print(cases_close,quantities)
+          
 
             # PREPAIR NEXT CASE
             quantities[node] += 1
