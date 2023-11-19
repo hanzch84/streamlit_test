@@ -348,7 +348,7 @@ with col_label_fixed:
 # 계산 버튼 클릭 이벤트 핸들러
 with col_right:
     if st.button("계산하기"):
-        if budget_input == "" or budget_input <= 0: result_text = '예산을 정확히 입력하세요.'
+        if budget_input == "" or budget_input <= 0: result_text = '예산을 정확히 입력하세요.(*0보다 큰 자연수)'
         elif len(item_prices) <= 1: result_text = '최소 2종류 이상의 단가를 입력하세요.'
         elif min(item_prices) <= 0: result_text = '단가가 0보다 작거나 같습니다.'
         elif max(item_prices) > budget_input: result_text = '예산이 부족합니다.'
