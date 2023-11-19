@@ -181,16 +181,15 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
         #limited_costs = [n * p for n, p in zip(limits, prices)]
         #spendables = [sum(limited_costs[i:]) for i in range(len(limited_costs))]
 
-        time_limit = 30  # 초 단위 연산시간제한
+        time_limit = 20  # 초 단위 연산시간제한
         start_time = time.time()
-        # _____CORE_CALCULATE THE BUDGET
+        # 연산 코어 모듈
         while not (node == -1 and is_overrun == True):
             # 현재 시간 확인
             current_time = time.time()
             # 시간 제한 초과 검사
             if current_time - start_time > time_limit:
-                text_out="시간초과 에러: 연산이 너무 복잡합니다."
-                raise TimeoutError(f"연산이 너무 복잡합니다.{current_time - start_time}")
+                raise TimeoutError(f"시간초과 에러 {current_time - start_time:,.4f}초 경과: 연산이 너무 복잡합니다.")
             # 랙 연산의 첫 인덱스를 위해 balances[-1]에 budget을저장합니다.
             balances[-1] = budget
             # quantity[n]의 아이템 개수와 단가의 곱만큼 예산에서 빼고 잔액에 저장합니다.(마지막 아이템 제외)
@@ -200,35 +199,29 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
             quantities[last_index] = min(balances[last_index - 1] // prices[last_index],limits[last_index])
             balances[last_index] = balances[last_index - 1] - (quantities[last_index] * prices[last_index])
 
-            #  CHECK ERROR(Over Purchasing)
-            #  IF ERROR occurs reset current node's 'qnty'(quantity) to 0.
-            # and node up to count up upper node item's 'qnty'(quantity).
-            if any(quantities[i] > limits[i] for i in range(item_count)):
-                is_overrun = True
-                quantities[node] = 0 #에러 발생시
-                node -= 1
-            elif any([i < 0 for i in balances]):
-                is_overrun = True
-                quantities[node] = 0 #에러 발생시
-                node -= 1
+            # 에러체크
+            if any(quantities[i] > limits[i] for i in range(item_count)): # 최대구매수초과검사
+                is_overrun = True #오버런 상태 선언
+                quantities[node] = 0 # 노드 구매량 초기화
+                node -= 1 # 노드 수준 1 올림
+            elif any([i < 0 for i in balances]): #예산 초과 검사
+                is_overrun = True #오버런 상태 선언
+                quantities[node] = 0 # 노드 구매량 초기화
+                node -= 1 # 노드 수준 1 올림
 
             #  IF there is no ERROR, Set over to False.
             # and reset node to the end(index of just before the last item in the list)
-            else:                
-                is_overrun = False
-                node = last_node
-                # SAVE THE RESULT
-                # 예산이 정확히 맞는 경우(balances의 마지막 항목이 0), case_exact 리스트에 결과를 추가합니다.
+            else: #에러가 없을 때 결과 저장
+                is_overrun = False #오버런 상태 초기화(해제)
+                node = last_node #노드 수준 초기화
+                # 예산에 정확히 맞는 경우, case_exact 리스트에 결과를 추가합니다.
                 if (balances[last_index] == 0):
                     cases_exact.append(list(quantities))
-                    print(cases_exact,quantities)
                 #예산이 남는 경우, case_close 리스트에 결과를 추가합니다.
                 elif (balances[last_index] > 0) and (balances[last_index] < prices[last_index]):
                     cases_close.append(list(quantities))
-                    print(cases_close,quantities)
-          
 
-            # PREPAIR NEXT CASE
+            # 다음 케이스 계산 준비
             quantities[node] += 1
             cases_count += 1            
             
@@ -250,7 +243,7 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
         list_show = (np.array(list_show) + np.array(base_quantity)).tolist()
 
 
-        text_out += f'이 프로그램은 {cases_count + 1}개의 케이스를 계산했습니다.\n'
+        text_out += f'이 프로그램은 {cases_count + 1:,d}개의 케이스를 계산했습니다.\n'
         return text_out, list_show, prices # 결과를 리턴
 
     except Exception as e:
