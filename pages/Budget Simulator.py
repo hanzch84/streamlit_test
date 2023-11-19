@@ -203,14 +203,15 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
             #  CHECK ERROR(Over Purchasing)
             #  IF ERROR occurs reset current node's 'qnty'(quantity) to 0.
             # and node up to count up upper node item's 'qnty'(quantity).
-            if any([i < 0 for i in balances]):
+            if any(quantities[i] > limits[i] for i in range(item_count)):
                 is_overrun = True
                 quantities[node] = 0 #에러 발생시
                 node -= 1
-            elif any(quantities[i] > limits[i] for i in range(item_count)):
+            elif any([i < 0 for i in balances]):
                 is_overrun = True
                 quantities[node] = 0 #에러 발생시
                 node -= 1
+
             #  IF there is no ERROR, Set over to False.
             # and reset node to the end(index of just before the last item in the list)
             else:                
