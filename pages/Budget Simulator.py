@@ -346,12 +346,12 @@ with col_label_fixed:
 # 계산 버튼 클릭 이벤트 핸들러
 with col_right:
     if st.button("계산하기"):
-        if budget_input == "" or budget_input <= 0: result_text = '예산을 정확히 입력하세요.'
+        if budget_input == "" or budget_input <= 0: result_text = '예산을 정확히 입력하세요.(*0보다 큰 자연수)'
         elif len(item_prices) <= 1: result_text = '최소 2종류 이상의 단가를 입력하세요.'
         elif min(item_prices) <= 0: result_text = '단가가 0보다 작거나 같습니다.'
         elif max(item_prices) > budget_input: result_text = '예산이 부족합니다.'
-        elif max_limit < budget_input: result_text = '최대구매가 예산보다 작아 예산을 쓸 수 없습니다.'
-        elif fixed_budget > budget_input: result_text = '최소구매가 예산보다 많아 예산을 쓸 수 없습니다.'
+        elif max_limit < budget_input: result_text = f'최대구매금액({max_limit:,d}원)이 예산({budget_input:,d}원)보다 작아/n예산을 다 쓸 수 없습니다.'
+        elif fixed_budget > budget_input: result_text = f'최소구매금액({fixed_budget:,d}원)이 예산({budget_input:,d}원)보다 많아/n예산 내에서 쓸 수 없습니다.'
         else:
             # 스피너를 표시하면서 계산 진행
             with st.spinner('계산 중...'):
