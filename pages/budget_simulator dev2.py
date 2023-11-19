@@ -11,7 +11,7 @@ result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누�
 단가가 0인 품목은 자동으로 제외합니다.
 물품 추가 버튼을 눌러\n물품을 추가할 수도 있고,
 체크 박스의 체크 표시를 해제하면\n잠시 계산에서 제외할 수도 있습니다.
-***최대구매 제한은 아직 불가능합니다.(알고리즘 추가 중)***
+기본 구매량과 최대 구매량을 제한할 수 있습니다.
 '''
 # ＊스타일 구역＊ Streamlit 페이지에 CSS를 추가
 # 모든 숫자 입력란의 텍스트를 오른쪽으로 정렬합니다.
@@ -23,7 +23,8 @@ st.markdown(
 
         /* 폰트와 텍스트 스타일 설정 */
         .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput, 
-        input[type="number"], code[class="language-java"], p, input[type="text"] {
+        input[type="number"], code[class="language-java"], p, input[type="text"],
+        textarea[aria-label="결과 출력"]{
             font-family: 'Nanum Gothic Coding', monospace !important;
             font-size: 14px;color: #FFC83D;}
 
@@ -48,6 +49,8 @@ st.markdown(
 
         /* 특정 텍스트에리어의 색상 */
         h,h3, [aria-label="사용할 예산"], p { color: #FFC83D; }
+        [data-testid="baseButton-secondary"],[data-testid="stDataFrameResizable"]{width: 100% !important;}
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -132,7 +135,7 @@ def on_max_change(index):
     current_price = st.session_state.get(f'item_price_{index}', 0)
     budget = st.session_state.get("budget")
     #에러처리
-    #최댜구매개수 * 단가가 예산을 넘는 경우 가능한 최대값으로 지정, 에러메시지
+    #최대구매개수 * 단가가 예산을 넘는 경우 가능한 최대값으로 지정, 에러메시지
     if (current_price * current_max) > budget :
         st.session_state[f'item_max_{index}'] = budget//current_price
     #위 조건을 통과한 것 중 최대구매개수가 최소구매값보다 작으면, 최소구매값과 일치.
@@ -140,10 +143,9 @@ def on_max_change(index):
         st.session_state[f'item_max_{index}'] = current_min
     
 # 예산 계산 함수
-def calculate_budget(budget, labels, prices, basics, limits):
+def calculate_budget(budget, labels, prices, basics, limits_in):
     try:
         text_out = f'사용해야 할 예산은 {format(budget,",")}원입니다.\n'
-
         item_count = len(prices)  # 계산해야 할 물품의 종류가 몇 개인지 저장합니다.
         quantity = [0] * item_count  # 배열은 각 아이템의 구매 수량을 저장하는 리스트입니다.
         balances = [0] * item_count  # 배열은 각 단계에서 남은 예산을 추적합니다.
@@ -151,65 +153,65 @@ def calculate_budget(budget, labels, prices, basics, limits):
         last_node = last_index - 1  # 순차적으로 조작할 마지막 노드를 마지막 인덱스 -1로 정합니다.(마지막 인덱스는 '남은 예산//단가'계산)
         node = last_node  # 노드(현재 처리 중인 아이템을 가리킵니다.) 넘버를 마지막 노드에 위치시킵니다.
         is_overrun = False  # 예산을 초과하는지 상태를 체크합니다.
+        is_limitOver = False
+
         case_count = 0  # 얼마나 많은 케이스를 검토했는지 체크하는 변수(연산량 확인용)
         case_exact = []  # 잔액 없이 예산을 소진하는 케이스(조합)를 저장하는 리스트
         case_close = []  # 잔액이 남지만 최대한 예산을 소진하는 케이스(조합)를 저장하는 리스트
         
         # labels와 prices를 결합하여 prices 기준으로 내림차순 정렬
-        combined = zip(prices, labels, basics, limits)
+        combined = zip(prices, labels, basics, limits_in)
         sorted_combined = sorted(combined, reverse=True)
 
         # 정렬된 데이터를 다시 분리
-        prices, labels, basics, limits = zip(*sorted_combined)
-
+        prices, labels, basics, limits_in = zip(*sorted_combined)
+        # Converting tuples to lists
+        prices = list(prices)
+        labels = list(labels)
+        basics = list(basics)
+        limits_in = list(limits_in)
         # 내림차순 정렬된 아이템 데이터를 출력
-        text_out += '_' * 24 + '정렬된 데이터'+ '_' * 24 + '\n'
+        text_width = 25
+        text_out += '_' * text_width + '정렬된 데이터'+ '_' * text_width + '\n'
         for n_prt in range(item_count):
             label = cut_string(labels[n_prt], 28)                
-            text_out += f"품목 #{n_prt + 1:02d} {label} = {prices[n_prt]:7,d} 원({basics[n_prt]:3d} ~ {limits[n_prt]:3d})\n"
-        text_out += '_' * 61 + '\n'
+            text_out += f"품목 #{n_prt + 1:02d} {label} = {prices[n_prt]:7,d} 원 ({basics[n_prt]:3d}  ~ {limits_in[n_prt]:3d})\n"
+        text_out += '_' * (text_width*2+13) + '\n'
 
         # 기본 구매량을 구매한 후 남는 예산을 예산으로 잡고 전 예산을 저장합니다.
         total_budget = budget
         fixed_budget = sum(a * b for a, b in zip(basics, prices))
         budget -= fixed_budget
         #최소 구매량을 뺀 최대 구매 개수를 구합니다.
-        limits = (np.array(limits) - np.array(basics)).tolist()
+        limits = (np.array(limits_in) - np.array(basics)).tolist()
         # 제한된 구매량으로 가능한 누적 구매액 purchasables을 구합니다.
-        limited_costs = [n * p for n, p in zip(limits, prices)]
-        #spendables = [sum(limited_costs[i:]) for i in range(len(limited_costs))] 
+        #limited_costs = [n * p for n, p in zip(limits, prices)]
+        #spendables = [sum(limited_costs[i:]) for i in range(len(limited_costs))]        
        
         start_time = time.time()
         # _____CORE_CALCULATE THE BUDGET
         while not (node == -1 and is_overrun == True):
-            # quantity[0]의 아이템 개수에 따라 첫 물품의 단가만큼 예산에서 빼고 balances[0] 에 저장합니다.
-            balances[0] = budget - (quantity[0] * prices[0])
-            # quantity[n]의 아이템 개수에 따라 첫 물품의 단가만큼 예산에서 빼고 balances[0] 에 저장합니다.Set the left money after buy items to left[n] according to list qnty[n]
-            for n in range(1, last_index):
+            # 랙 연산의 첫 인덱스를 위해 balances[-1]에 budget을저장합니다.
+            balances[-1] = budget
+            # quantity[n]의 아이템 개수와 단가의 곱만큼 예산에서 빼고 잔액에 저장합니다.(마지막 아이템 제외)
+            for n in range(last_index):
                 balances[n] = balances[n - 1] - (quantity[n] * prices[n])
-            # With the left money, calculates How many items(Last one) can be bought.
-            quantity[last_index] = balances[last_index - 1] // prices[last_index]
+            # 마지막 아이템을 몇 개 살 수 있는지 계산합니다.(마지막 아이템에 구매제한이 있으면 더 작은 값을 선택)
+            quantity[last_index] = min(balances[last_index - 1] // prices[last_index],limits[last_index])
             balances[last_index] = balances[last_index - 1] - (quantity[last_index] * prices[last_index])
 
-            # 각 아이템에 대한 최대 구매량 검사
-            for i in range(item_count):
-                if quantity[i] > limits[i]:
-                    is_overrun = True
-                    quantity[node] = 0
-                    node -= 1
-                    continue
-                
             #  CHECK ERROR(Over Purchasing)
             #  IF ERROR occurs reset current node's 'qnty'(quantity) to 0.
             # and node up to count up upper node item's 'qnty'(quantity).
-            if any([i < 0 for i in balances]):
+            if any([i < 0 for i in balances]) or any(np.array(quantity) > np.array(limits)):
                 is_overrun = True
-                quantity[node] = 0
+                quantity[node] = 0 #에러 발생시
                 node -= 1
 
             #  IF there is no ERROR, Set over to False.
             # and reset node to the end(index of just before the last item in the list)
-            else:
+            else:                
+                is_limitOver = False
                 is_overrun = False
                 node = last_node
                 # SAVE THE RESULT
@@ -217,12 +219,12 @@ def calculate_budget(budget, labels, prices, basics, limits):
                 if (balances[last_index] == 0):
                     case_exact.append(list(quantity))
                 #예산이 남는 경우, case_close 리스트에 결과를 추가합니다.
-                elif (balances[last_index] > 0):
-                    case_close.append(list(quantity))
+                elif (balances[last_index] > 0) and (balances[last_index] < prices[last_index]):
+                    case_close.append(list(quantity))            
 
             # PREPAIR NEXT CASE
             quantity[node] += 1
-            case_count += 1
+            case_count += 1            
             
         end_time = time.time()
         execution_time = end_time - start_time
@@ -237,31 +239,30 @@ def calculate_budget(budget, labels, prices, basics, limits):
         else: # 완벽한 결과가 있으면 결과로 설정
             text_out += f'{total_budget:7,d}원의 예산에 맞는 {len(case_exact):,d}개의 완벽한 방법을 찾았습니다.\n'
             list_show = case_exact
-        
+
         # 모든 행에 더하기
         list_show = (np.array(list_show) + np.array(basics)).tolist()
 
-
-
         # 헤더 출력
-        list_header = []
         text_out += ' '
         for n_title in range(0, item_count):
-            list_header.append(f'#{n_title + 1:02d}')
             text_out += f'___#{n_title + 1:02d} '
         text_out += '\n'
-
+        
         # 케이스 리스트 출력
+        #sum_show_list =[]
         for n_caseshow in list_show:
             sum_show = 0
             for n_index, n_itemshow in enumerate(n_caseshow):
                 sum_show += n_itemshow * prices[n_index]
                 text_out += f' {n_itemshow:4d}개'
             text_out += f"   {format(sum_show, '7,d')} 원\n"
+            #sum_show_list.append(sum_show)
         text_out += f'이 프로그램은 {case_count + 1}개의 케이스를 계산했습니다.\n'
-        return text_out, list_header, list_show, prices # 결과를 리턴
+        return text_out, list_show, prices # 결과를 리턴
 
-    except:
+    except Exception as e:
+        print('Error Message:', e)
         return '에러입니다.', [], [], prices # 에러 처리된 결과를 리턴
 
 # 웹 앱 UI 구현
@@ -354,7 +355,6 @@ with col_label_fixed:
     max_limit= sum(a * b for a, b in zip(max_quantities, item_prices))
     st.warning(f"확정: {fixed_budget:,d}원(남은 예산: {(budget_input - fixed_budget):,d}원) 구매제한: {max_limit:,d}원")
 
-#quantity = []
 # 계산 버튼 클릭 이벤트 핸들러
 with col_right:
     if st.button("계산하기"):
@@ -368,16 +368,18 @@ with col_right:
             # 스피너를 표시하면서 계산 진행
             with st.spinner('계산 중...'):
                 # 계산 결과를 구합니다.
-                result_text, result_header,result_list, result_prices = calculate_budget(budget_input, item_names, item_prices,min_quantities,max_quantities)
-st.code(result_text, language="java")
-#st.text_area("결과 출력", result_text, height=300)
+                result_text, result_list, result_prices = calculate_budget(budget_input, item_names, item_prices,min_quantities,max_quantities)
+if len(result_text.split('\n'))<30:
+    st.code(result_text, language="java")
+else:
+    st.text_area("결과 출력", result_text, height=300)
 
 # 새로운 열 '금액'을 계산하고 데이터프레임에 추가합니다.
 try:
-    df = pd.DataFrame(result_list, columns=result_header)
+    df = pd.DataFrame(result_list, columns=result_prices)
     df['금액'] = df.mul(result_prices).sum(axis=1)
     if df.__len__() != 0:
         st.write("데이터프레임")
-        st.dataframe(df,hide_index=True) # 결과를 화면에 표시합니다.
+        st.dataframe(df,hide_index=True,width=800) # 결과를 화면에 표시합니다.
 except:
     pass
