@@ -2,6 +2,8 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import unicodedata
+import time
+
 
 result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누르면,
 예산에 딱 맞게 물건을\n살 수 있는 방법을 찾아줍니다.\n
@@ -18,23 +20,34 @@ st.markdown(
     """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap');
-        .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput {
-            font-family: 'Nanum Gothic Coding', monospace !important;}
-        /* 텍스트 영역의 클래스 이름을 기반으로 스타일 지정 */
-        input[type="number"] {text-align: right;}
-        input[type="checkbox"] {margin: -10px;}
-        h1{text-align: center;}
-        input[type="number"], textarea[aria-label="Results"], p, input[type="text"] {
-            font-family: Nanum Gothic Coding, monospace; /* 원하는 폰트로 변경 */
-            font-size: 14px; /* 폰트 크기 설정 */
-            }
-        input[type="number"], textarea[aria-label="Results"],input[type="text"] {
-            margin: -5px; /* 행간 간격을 줄입니다 */}
+
+        /* 폰트와 텍스트 스타일 설정 */
+        .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput, 
+        input[type="number"], code[class="language-java"], p, input[type="text"] {
+            font-family: 'Nanum Gothic Coding', monospace !important;
+            font-size: 14px;color: #FFC83D;}
+
+        /* 텍스트 정렬 */
+        input[type="number"] { text-align: right; }
+        h1,h3 { text-align: center; }
+
+        /* 체크박스 스타일 */
+        [data-testid="stCheckbox"] {
+            margin-left: 5px;
+            margin-right: -5px;
+            height: 1rem;
+            width: 1rem;}
+
+        /* 여백과 간격 조정 */
+        input[type="number"], textarea[aria-label="결과 출력"], input[type="text"], 
         [data-testid="stVerticalBlock"] > div:first-child {
-        margin: -8px; /* 간격 조정 */
-    }
-        [data-testid="stHorizontalBlock"]{}
-        textarea[aria-label="Results"]{color: #FFC83D;}
+            margin: -4px;}
+        input[aria-label="budget"]{margin: 0px;font-size: 24px;}
+        
+        [data-testid="stNotificationContentWarning"]{margin: -8px;font-size: 16px;}
+
+        /* 특정 텍스트에리어의 색상 */
+        h,h3, [aria-label="사용할 예산"], p { color: #FFC83D; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -135,7 +148,7 @@ def calculate_budget(budget, labels, prices, basics, limits):
         quantity = [0] * item_count  # 배열은 각 아이템의 구매 수량을 저장하는 리스트입니다.
         balances = [0] * item_count  # 배열은 각 단계에서 남은 예산을 추적합니다.
         last_index = item_count - 1  # 마지막 인덱스 번호를 아이템 개수-1로 정합니다.
-        last_node = item_count - 2  # 순차적으로 조작할 마지막 노드를 아이템 개수 -2로 정합니다.(제일 마지막 노드는 '남은 예산/단가'공식으로 해결)
+        last_node = last_index - 1  # 순차적으로 조작할 마지막 노드를 마지막 인덱스 -1로 정합니다.(마지막 인덱스는 '남은 예산//단가'계산)
         node = last_node  # 노드(현재 처리 중인 아이템을 가리킵니다.) 넘버를 마지막 노드에 위치시킵니다.
         is_overrun = False  # 예산을 초과하는지 상태를 체크합니다.
         case_count = 0  # 얼마나 많은 케이스를 검토했는지 체크하는 변수(연산량 확인용)
@@ -162,27 +175,39 @@ def calculate_budget(budget, labels, prices, basics, limits):
         budget -= fixed_budget
         #최소 구매량을 뺀 최대 구매 개수를 구합니다.
         limits = (np.array(limits) - np.array(basics)).tolist()
-
+        # 제한된 구매량으로 가능한 누적 구매액 purchasables을 구합니다.
+        limited_costs = [n * p for n, p in zip(limits, prices)]
+        #spendables = [sum(limited_costs[i:]) for i in range(len(limited_costs))] 
+       
+        start_time = time.time()
         # _____CORE_CALCULATE THE BUDGET
         while not (node == -1 and is_overrun == True):
             # quantity[0]의 아이템 개수에 따라 첫 물품의 단가만큼 예산에서 빼고 balances[0] 에 저장합니다.
-            balances[-1] = budget
+            balances[0] = budget - (quantity[0] * prices[0])
             # quantity[n]의 아이템 개수에 따라 첫 물품의 단가만큼 예산에서 빼고 balances[0] 에 저장합니다.Set the left money after buy items to left[n] according to list qnty[n]
-            for n in range(0, last_index):
+            for n in range(1, last_index):
                 balances[n] = balances[n - 1] - (quantity[n] * prices[n])
             # With the left money, calculates How many items(Last one) can be bought.
             quantity[last_index] = balances[last_index - 1] // prices[last_index]
             balances[last_index] = balances[last_index - 1] - (quantity[last_index] * prices[last_index])
 
-            # CHECK ERROR(Over Purchasing)
-            # IF ERROR occurs reset current node's quantity to 0.
-            # and node up to count up upper node item's quantity.
+            # 각 아이템에 대한 최대 구매량 검사
+            for i in range(item_count):
+                if quantity[i] > limits[i]:
+                    is_overrun = True
+                    quantity[node] = 0
+                    node -= 1
+                    continue
+                
+            #  CHECK ERROR(Over Purchasing)
+            #  IF ERROR occurs reset current node's 'qnty'(quantity) to 0.
+            # and node up to count up upper node item's 'qnty'(quantity).
             if any([i < 0 for i in balances]):
                 is_overrun = True
                 quantity[node] = 0
                 node -= 1
 
-            # IF there is no ERROR, Set over to False.
+            #  IF there is no ERROR, Set over to False.
             # and reset node to the end(index of just before the last item in the list)
             else:
                 is_overrun = False
@@ -198,7 +223,11 @@ def calculate_budget(budget, labels, prices, basics, limits):
             # PREPAIR NEXT CASE
             quantity[node] += 1
             case_count += 1
-
+            
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print(f"실행 시간: {execution_time}초")
+        
         # 계산 결과 출력 부분
         if len(case_exact) == 0: # 완벽한 결과가 없으면 근사치 리스트를 결과로 설정
             text_out += f'{total_budget:,d}원의 예산에 맞게 구입할 방법이 없습니다.\n'
@@ -238,14 +267,15 @@ def calculate_budget(budget, labels, prices, basics, limits):
 # 웹 앱 UI 구현
 result_header, result_list, result_prices = [], [], []
 
-st.title("👌알잘딱깔센 예산 0원 만들기😊")
+st.title("👌알잘딱깔센 예산 🍞원 만들기😊")
+st.subheader('SimBud beta(Budget Simulator V0.98)')
 
 col_label_budget, col_input_budget = st.columns([2.5,7.5])
 with col_label_budget:
     st.subheader("사용할 예산")
 with col_input_budget:
     # 예산 입력란
-    budget_input = st.number_input("사용할 예산", min_value=0, key="budget", help="사용해야하는 예산을 입력하세요.",
+    budget_input = st.number_input("budget", min_value=0, key="budget", help="사용해야하는 예산을 입력하세요.",
                                 on_change=on_budget_change, format="%d", label_visibility='collapsed')
 
 # session_state를 확인하여 물품 개수를 관리합니다.
@@ -308,7 +338,7 @@ for i in range(st.session_state.item_count):
         min_quantities.append(item_min)
         max_quantities.append(item_max)
 
-col_left,col_label_fixed, col_right = st.columns([2,6,2])
+col_left,col_label_fixed, col_right = st.columns([2,9,2])
 
 # 물품추가 버튼 클릭 시 호출되는 함수
 def add_item():
@@ -322,7 +352,7 @@ with col_left:
 with col_label_fixed:
     fixed_budget = sum(a * b for a, b in zip(min_quantities, item_prices))
     max_limit= sum(a * b for a, b in zip(max_quantities, item_prices))
-    st.write(f"확정: {fixed_budget:,d}원(남은 예산: {(budget_input - fixed_budget):,d}원) 구매제한: {max_limit:,d}원")
+    st.warning(f"확정: {fixed_budget:,d}원(남은 예산: {(budget_input - fixed_budget):,d}원) 구매제한: {max_limit:,d}원")
 
 #quantity = []
 # 계산 버튼 클릭 이벤트 핸들러
@@ -339,12 +369,15 @@ with col_right:
             with st.spinner('계산 중...'):
                 # 계산 결과를 구합니다.
                 result_text, result_header,result_list, result_prices = calculate_budget(budget_input, item_names, item_prices,min_quantities,max_quantities)
-st.text_area("Results", result_text, height=300)
+st.code(result_text, language="java")
+#st.text_area("결과 출력", result_text, height=300)
 
 # 새로운 열 '금액'을 계산하고 데이터프레임에 추가합니다.
 try:
     df = pd.DataFrame(result_list, columns=result_header)
     df['금액'] = df.mul(result_prices).sum(axis=1)
-    if df.__len__() != 0: st.dataframe(df,hide_index=True) # 결과를 화면에 표시합니다.
+    if df.__len__() != 0:
+        st.write("데이터프레임")
+        st.dataframe(df,hide_index=True) # 결과를 화면에 표시합니다.
 except:
     pass

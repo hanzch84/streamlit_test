@@ -23,7 +23,7 @@ st.markdown(
 
         /* 폰트와 텍스트 스타일 설정 */
         .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput, 
-        input[type="number"], textarea[aria-label="Results"], p, input[type="text"] {
+        input[type="number"], code[class="language-java"], p, input[type="text"] {
             font-family: 'Nanum Gothic Coding', monospace !important;
             font-size: 14px;color: #FFC83D;}
 
@@ -40,13 +40,13 @@ st.markdown(
             width: 1rem;}
 
         /* 여백과 간격 조정 */
-        input[type="number"], textarea[type="textarea"], input[type="text"], 
+        input[type="number"], textarea[aria-label="결과 출력"], input[type="text"], 
         [data-testid="stVerticalBlock"] > div:first-child {
             margin: -4px;}
         input[aria-label="budget"]{margin: 0px;font-size: 24px;}
 
         /* 특정 텍스트에리어의 색상 */
-        h1,h3, [aria-label="사용할 예산"], textarea[aria-label="Results"],p { color: #FFC83D; }
+        h,h3, [aria-label="사용할 예산"],p { color: #FFC83D; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -147,7 +147,7 @@ def calculate_budget(budget, labels, prices, basics, limits):
         quantity = [0] * item_count  # 배열은 각 아이템의 구매 수량을 저장하는 리스트입니다.
         balances = [0] * item_count  # 배열은 각 단계에서 남은 예산을 추적합니다.
         last_index = item_count - 1  # 마지막 인덱스 번호를 아이템 개수-1로 정합니다.
-        last_node = item_count - 2  # 순차적으로 조작할 마지막 노드를 아이템 개수 -2로 정합니다.(제일 마지막 노드는 '남은 예산/단가'공식으로 해결)
+        last_node = last_index - 1  # 순차적으로 조작할 마지막 노드를 마지막 인덱스 -1로 정합니다.(마지막 인덱스는 '남은 예산//단가'계산)
         node = last_node  # 노드(현재 처리 중인 아이템을 가리킵니다.) 넘버를 마지막 노드에 위치시킵니다.
         is_overrun = False  # 예산을 초과하는지 상태를 체크합니다.
         case_count = 0  # 얼마나 많은 케이스를 검토했는지 체크하는 변수(연산량 확인용)
@@ -174,10 +174,10 @@ def calculate_budget(budget, labels, prices, basics, limits):
         budget -= fixed_budget
         #최소 구매량을 뺀 최대 구매 개수를 구합니다.
         limits = (np.array(limits) - np.array(basics)).tolist()
-
-        # 최대 개수에 대해 마지막 바로 앞 노드에서 잔액이 최대치보다 클 경우: 마지막 노드는 최대치만큼 먼저 구입하고 잔액/ 마지막 바로 앞 노드의 단가로 갯수 결정
-        # 각 노드에서 최대치를 넘었는지 검사.
-
+        # 제한된 구매량으로 가능한 누적 구매액 purchasables을 구합니다.
+        limited_costs = [n * p for n, p in zip(limits, prices)]
+        #spendables = [sum(limited_costs[i:]) for i in range(len(limited_costs))] 
+       
         start_time = time.time()
         # _____CORE_CALCULATE THE BUDGET
         while not (node == -1 and is_overrun == True):
@@ -214,11 +214,11 @@ def calculate_budget(budget, labels, prices, basics, limits):
             # PREPAIR NEXT CASE
             quantity[node] += 1
             case_count += 1
-
+            
         end_time = time.time()
         execution_time = end_time - start_time
         print(f"실행 시간: {execution_time}초")
-
+        
         # 계산 결과 출력 부분
         if len(case_exact) == 0: # 완벽한 결과가 없으면 근사치 리스트를 결과로 설정
             text_out += f'{total_budget:,d}원의 예산에 맞게 구입할 방법이 없습니다.\n'
@@ -258,14 +258,15 @@ def calculate_budget(budget, labels, prices, basics, limits):
 # 웹 앱 UI 구현
 result_header, result_list, result_prices = [], [], []
 
-st.title("👌알잘딱깔센 예산 0원 만들기😊")
+st.title("👌알잘딱깔센 예산 🍞원 만들기😊")
 st.subheader("Budget Simulator V6(SimBud 6 beta)")
+
 col_label_budget, col_input_budget = st.columns([2.5,7.5])
 with col_label_budget:
     st.subheader("사용할 예산")
 with col_input_budget:
     # 예산 입력란
-    budget_input = st.number_input("사용할 예산", min_value=0, key="budget", help="사용해야하는 예산을 입력하세요.",
+    budget_input = st.number_input("budget", min_value=0, key="budget", help="사용해야하는 예산을 입력하세요.",
                                 on_change=on_budget_change, format="%d", label_visibility='collapsed')
 
 # session_state를 확인하여 물품 개수를 관리합니다.
@@ -359,12 +360,15 @@ with col_right:
             with st.spinner('계산 중...'):
                 # 계산 결과를 구합니다.
                 result_text, result_header,result_list, result_prices = calculate_budget(budget_input, item_names, item_prices,min_quantities,max_quantities)
-st.text_area("Results", result_text, height=300)
+st.code(result_text, language="java")
+#st.text_area("결과 출력", result_text, height=300)
 
 # 새로운 열 '금액'을 계산하고 데이터프레임에 추가합니다.
 try:
     df = pd.DataFrame(result_list, columns=result_header)
     df['금액'] = df.mul(result_prices).sum(axis=1)
-    if df.__len__() != 0: st.dataframe(df,hide_index=True) # 결과를 화면에 표시합니다.
+    if df.__len__() != 0:
+        st.write("데이터프레임")
+        st.dataframe(df,hide_index=True) # 결과를 화면에 표시합니다.
 except:
     pass
