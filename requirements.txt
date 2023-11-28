@@ -9,3 +9,4 @@ python-docx
 python-pptx
 olefile
 plotly
+google-cloud-vision

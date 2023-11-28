@@ -3,10 +3,12 @@ import numpy as np
 import pandas as pd
 import unicodedata
 import time
-
+from functools import reduce
 
 result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누르면,
 예산에 딱 맞게 물건을\n살 수 있는 방법을 찾아줍니다.\n
+데이터프레임으로 출력된 결과에
+마우스를 올리면 저장도 가능해요.\n
 물품 이름은 안 쓰셔도 작동합니다.
 단가가 0인 품목은 자동으로 제외합니다.
 물품 추가 버튼을 눌러\n물품을 추가할 수도 있고,
@@ -14,13 +16,10 @@ result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누�
 기본 구매량과 최대 구매량을 제한할 수 있습니다.
 '''
 # ＊스타일 구역＊ Streamlit 페이지에 CSS를 추가
-# 모든 숫자 입력란의 텍스트를 오른쪽으로 정렬합니다.
-# 폰트 및 크기 설정
 st.markdown(
     """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap');
-
         /* 폰트와 텍스트 스타일 설정 */
         .stTextInput, .stButton > button, .stSelectbox, .stDateInput, .stTimeInput, 
         input[type="number"], code[class="language-java"], p, input[type="text"],
@@ -30,7 +29,7 @@ st.markdown(
 
         /* 텍스트 정렬 */
         input[type="number"] { text-align: right; }
-        h1,h3 { text-align: center; }
+        h1,h3{ text-align: center; }        
 
         /* 체크박스 스타일 */
         [data-testid="stCheckbox"] {
@@ -41,21 +40,24 @@ st.markdown(
 
         /* 여백과 간격 조정 */
         input[type="number"], textarea[aria-label="결과 출력"], input[type="text"], 
-        [data-testid="stVerticalBlock"] > div:first-child {
-            margin: -4px;}
-        input[aria-label="budget"]{margin: 0px;font-size: 24px;}
-        
+        [data-testid="stVerticalBlock"] > div:first-child {margin: -4px;}
+        input[aria-label="budget"]{margin: 0px;font-size: 24px;font-weight: bold;}
         [data-testid="stNotificationContentWarning"]{margin: -8px;font-size: 16px;}
 
         /* 특정 텍스트에리어의 색상 */
-        h,h3, [aria-label="사용할 예산"], p { color: #FFC83D; }
+        h3, p { color: #FFC83D; }
         [data-testid="baseButton-secondary"],[data-testid="stDataFrameResizable"]{width: 100% !important;}
-
-    </style>
-    """, unsafe_allow_html=True)
+    </style>""", unsafe_allow_html=True)
 
 # ＊함수 구역＊
 # 문자열의 출력 길이를 구하는 함수(텍스트박스, 콘솔 출력용)
+
+def get_conmplexcity(price, max, min):
+    last_index = price.label(min(price))
+    combination = [x-y+1 for x,y in zip(max,min)]
+    combination[last_index] = 1
+    return reduce(lambda x, y: x * y, combination)
+    
 def get_print_length(s):
     screen_length = 0
     for char in s:
@@ -94,8 +96,10 @@ def update_item_availability(i, budget):
 # 예산 변경 시 호출되는 함수
 def on_budget_change():
     budget = st.session_state.get("budget", 0)
+    
     for i in range(st.session_state.item_count):
         update_item_availability(i, budget)
+        on_max_change(i)
 
 # 단가 변경 시 호출되는 함수
 def on_price_change():
@@ -177,19 +181,18 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
         budget -= fixed_budget
         #최소 구매량을 뺀 최대 구매 개수를 구합니다.
         limits = [lim - base for lim, base in zip(limited_quantity, base_quantity)]
-        # 제한된 구매량으로 가능한 누적 구매액 purchasables을 구합니다.
-        #limited_costs = [n * p for n, p in zip(limits, prices)]
-        #spendables = [sum(limited_costs[i:]) for i in range(len(limited_costs))]
-
+        complexity = np.prod(np.array(limits[:-1])+1)
+        
         time_limit = 20  # 초 단위 연산시간제한
         start_time = time.time()
         # 연산 코어 모듈
         while not (node == -1 and is_overrun == True):
             # 현재 시간 확인
             current_time = time.time()
+            execution_time = current_time - start_time
             # 시간 제한 초과 검사
-            if current_time - start_time > time_limit:
-                raise TimeoutError(f"시간초과 에러 {current_time - start_time:,.4f}초 경과: 연산이 너무 복잡합니다.")
+            if execution_time > time_limit:
+                raise TimeoutError(f"시간초과 에러 {execution_time:,.4f}초 경과: 연산이 너무 복잡합니다.\n복잡도: {complexity:,}")
             # 랙 연산의 첫 인덱스를 위해 balances[-1]에 budget을저장합니다.
             balances[-1] = budget
             # quantity[n]의 아이템 개수와 단가의 곱만큼 예산에서 빼고 잔액에 저장합니다.(마지막 아이템 제외)
@@ -217,8 +220,10 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
                 # 예산에 정확히 맞는 경우, case_exact 리스트에 결과를 추가합니다.
                 if (balances[last_index] == 0):
                     cases_exact.append(list(quantities))
+                elif len(cases_exact) > 0: #완벽한 케이스를 하나라도 찾으면 가속을 위해 나머지는 무시합니다.
+                    pass
                 #예산이 남는 경우, case_close 리스트에 결과를 추가합니다.
-                elif (balances[last_index] > 0) and (balances[last_index] < prices[last_index]):
+                elif (balances[last_index] > 0): # and (balances[last_index] < prices[last_index]):
                     cases_close.append(list(quantities))
 
             # 다음 케이스 계산 준비
@@ -228,7 +233,7 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
         end_time = time.time()
         execution_time = end_time - start_time
         print(f"실행 시간: {execution_time}초")
-        
+
         # 계산 결과 출력 부분
         if len(cases_exact) == 0: # 완벽한 결과가 없으면 근사치 리스트를 결과로 설정
             text_out += f'{total_budget:,d}원의 예산에 맞게 구입할 방법이 없습니다.\n'
@@ -236,13 +241,11 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
             list_show = cases_close
 
         else: # 완벽한 결과가 있으면 결과로 설정
-            text_out += f'{total_budget:7,d}원의 예산에 맞는 {len(cases_exact):,d}개의 완벽한 방법을 찾았습니다.\n'
+            text_out += f'예산에 맞는 {len(cases_exact):,d}개의 완벽한 방법을 찾았습니다.\n'
             list_show = cases_exact
 
         # 모든 행에 더하기
         list_show = (np.array(list_show) + np.array(base_quantity)).tolist()
-
-
         text_out += f'이 프로그램은 {cases_count + 1:,d}개의 케이스를 계산했습니다.\n'
         return text_out, list_show, prices # 결과를 리턴
 
@@ -253,8 +256,8 @@ def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
 # 웹 앱 UI 구현
 result_list, result_prices = [], []
 
-st.title("👌알잘딱깔센 예산 🍞원 만들기😊")
-st.subheader('SimBud beta(Budget Simulator V0.98)')
+st.title("👌알잘딱깔센 예산 🍞 만들기😊")
+st.markdown('<p style="color: #a8a888;text-align: right;">SimBud beta (Budget Simulator V0.98), 버그 신고 및 개선 문의: <a href="mailto:hanzch84@gmail.com">hanzch84@gmail.com</a></p>', unsafe_allow_html=True)
 
 col_label_budget, col_input_budget = st.columns([2.5,7.5])
 with col_label_budget:
@@ -343,27 +346,46 @@ with col_label_fixed:
 # 계산 버튼 클릭 이벤트 핸들러
 with col_right:
     if st.button("계산하기"):
+        if budget_input != st.session_state.get("budget",0):
+            on_budget_change()
         if budget_input == "" or budget_input <= 0: result_text = '예산을 정확히 입력하세요.(*0보다 큰 자연수)'
         elif len(item_prices) <= 1: result_text = '최소 2종류 이상의 단가를 입력하세요.'
         elif min(item_prices) <= 0: result_text = '단가가 0보다 작거나 같습니다.'
         elif max(item_prices) > budget_input: result_text = '예산이 부족합니다.'
         elif max_limit < budget_input: result_text = f'최대구매금액({max_limit:,d}원)이 예산({budget_input:,d}원)보다 작아 예산을 다 쓸 수 없습니다.'
         elif fixed_budget > budget_input: result_text = f'최소구매금액({fixed_budget:,d}원)이 예산({budget_input:,d}원)보다 많아 예산 내에서 쓸 수 없습니다.'
+        elif len(item_prices) != len(set(item_prices)): result_text= '중복된 단가가 있습니다.'
+
         else:
-            # 스피너를 표시하면서 계산 진행
-            with st.spinner('계산 중...'):
-                # 계산 결과를 구합니다.
-                result_text, result_list, result_prices = calculate_budget(budget_input, item_names, item_prices,min_quantities,max_quantities)
+            # 스피너를 표시하면서 계산 진행 오버레이와 스피너를 위한 컨테이너 생성
+            overlay_container = st.empty()
+            # 오버레이와 스피너 추가
+            overlay_container.markdown("""
+            <style>
+            .overlay {
+                position: fixed;top: 0;left: 0;width: 100%;height: 100%;
+                background: rgba(0, 0, 0, 0.5);z-index: 999;display: flex;
+                justify-content: center;align-items: center;                }
+            .spinner {margin-bottom: 10px;}
+            </style>
+            <div class="overlay"><div><div class="spinner">
+                        <span class="fa fa-spinner fa-spin fa-3x"></span>
+                    </div><div style="color: white;">계산 중...</div></div></div>""", unsafe_allow_html=True)
+
+            # 계산 결과를 구합니다.
+            result_text, result_list, result_prices = calculate_budget(budget_input, item_names, item_prices,min_quantities,max_quantities)
+            # 작업이 완료되면 오버레이와 스피너를 제거합니다.
+            overlay_container.empty()
 if len(result_text.split('\n'))<30:
     st.code(result_text, language="java")
 else:
     st.text_area("결과 출력", result_text, height=300)
 
-# 새로운 열 '금액'을 계산하고 데이터프레임에 추가합니다.
 try:
-    df = pd.DataFrame(result_list, columns=result_prices)
+    df = pd.DataFrame(result_list, columns=[f'{price:,d}원' for price in result_prices])
+    # 새로운 열 '금액'을 계산하고 데이터프레임에 추가합니다.
     df['금액'] = df.mul(result_prices).sum(axis=1)
     if df.__len__() != 0:
-        st.dataframe(df,hide_index=True,width=800) # 결과를 화면에 표시합니다.
+        st.dataframe(df,hide_index=True, use_container_width=True) # 결과를 화면에 표시합니다.
 except:
     pass
