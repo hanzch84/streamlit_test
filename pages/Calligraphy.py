@@ -106,14 +106,12 @@ else:
     picture = st.file_uploader('이미지를 업로드 하세요.', type=['png', 'jpg', 'jpeg'])
 
 if picture is not None:
-    if radio_option.__len__() != 0:
-        
-        outputs = ocr_label(picture, languages_selected,font_color)
-        if outputs.__len__() != 0:
-            ocr_text = list(zip(*outputs))[1]
-            st.write(ocr_text)
+    outputs = ocr_label(picture, languages_selected,font_color)
+    if outputs.__len__() != 0:
+        ocr_text = list(zip(*outputs))[1]
+        st.write(ocr_text)
 
 
 
-        options = st.multiselect("인식된 단어를 고르세요.", ocr_text)
-        st.write(f"당신이 선택한 단어: {', '.join(options)}")
+    options = st.multiselect("인식된 단어를 고르세요.", ocr_text)
+    st.write(f"당신이 선택한 단어: {', '.join(options)}")
