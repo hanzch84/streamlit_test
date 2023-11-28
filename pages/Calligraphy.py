@@ -3,6 +3,9 @@ import easyocr
 import cv2
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
+import docx
+
+
 
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 
@@ -53,14 +56,40 @@ get_language_codes = lambda names, d: list(map(d.get, filter(d.__contains__, nam
 
 # 페이지 랜더링
 st.title("도전! 예쁜 글씨 쓰기👍")
-text_input = st.text_area("글씨쓰기 연습할 문구를 입력하세요.")
 
+
+col_box, col_btn_commit = st.columns([9,1])
+with col_box:
+    text_area_input = st.text_area("글씨쓰기 연습할 문구를 입력하세요.")
+                 
+        
 char_box_id = {}
 cols = st.columns(13)
 
 for j,col in enumerate(cols):
     for i in range(5):
-        char_box_id[f"{i}{j}"] = col.text_input(f"{i}{j}",label_visibility="collapsed")
+        char_box_id[f"{i}{j}"] = col.text_input(f"char{i}{j}",label_visibility="collapsed")
+
+if col_btn_commit.button("입력"):
+    # 2차원 리스트를 생성합니다.
+    text_array_2D = []
+    # 3개의 세로 행을 만듭니다.
+    for i in range(3):
+        row = ["", "", "", "", "", "", "", "", "", "", "", "", ""]
+        text_array_2D.append(row)
+            
+    for row_num in range(3):
+        for col_num in range(13):
+            if text_area_input!="":
+                first_char = text_area_input[0]
+                if first_char == '\n':
+                    break
+                text_array_2D.append(first_char)
+                st.session_state[f"char{i}{j}"] = first_char
+                text_area_input = text_area_input[1:]
+                
+                
+
 
 
 # 딕셔너리
