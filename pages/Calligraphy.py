@@ -53,7 +53,7 @@ get_language_codes = lambda names, d: list(map(d.get, filter(d.__contains__, nam
 
 # 페이지 랜더링
 st.title("도전! 예쁜 글씨 쓰기👍")
-text_input = st.text_area("글씨쓰기 연습할 문구 입력")
+text_input = st.text_area("글씨쓰기 연습할 문구를 입력하세요.")
 
 char_box_id = {}
 cols = st.columns(13)
