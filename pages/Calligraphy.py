@@ -61,24 +61,9 @@ def hex_to_rgb(hex_color):
     
     return (r, g, b)
 
-get_language_codes = lambda names, d: list(map(d.get, filter(d.__contains__, names)))
 
-# 페이지 랜더링
-st.title("도전! 예쁜 글씨 쓰기👍")
-
-
-col_box, col_btn_commit = st.columns([12,1])
-with col_box:
-    text_area_input = st.text_area("글씨 쓰기 연습할 문구를 입력하세요.",height=135,placeholder="글씨 쓰기 연습할 문구를 입력하세요.",label_visibility='collapsed')
-                 
-single_marks = [".",",","?","!"]
-char_box_id = {}
-cols = st.columns(13)
-
-
-
-if col_btn_commit.button("학습지 생성"):
-    # 2차원 리스트를 생성합니다.
+def maketextgrid(text_area_input):
+        # 2차원 리스트를 생성합니다.
     text_array_2D = []
     # 3개의 세로 행을 만듭니다.
     for i in range(7):
@@ -107,6 +92,26 @@ if col_btn_commit.button("학습지 생성"):
                                                                 max_chars=1,
                                                                 key=f"char{col_num}{row_num}")
 
+
+
+get_language_codes = lambda names, d: list(map(d.get, filter(d.__contains__, names)))
+
+# 페이지 랜더링
+st.title("도전! 예쁜 글씨 쓰기👍")
+
+
+col_box, col_btn_commit = st.columns([12,1])
+with col_box:
+    text_area_input = st.text_area("글씨 쓰기 연습할 문구를 입력하세요.",height=135,placeholder="글씨 쓰기 연습할 문구를 입력하세요.",label_visibility='collapsed')
+                 
+single_marks = [".",",","?","!"]
+char_box_id = {}
+cols = st.columns(13)
+
+
+
+if col_btn_commit.button("학습지 생성"):
+    maketextgrid(text_area_input)
 languages_selected = ["ko", "en"]
 font_color = hex_to_rgb(st.color_picker('폰트 색상을 지정하세요.','#00FF00'))
 radio_cam_option = st.radio("카메라 촬영 vs 파일 업로드", ["카메라 촬영", "파일 업로드"],label_visibility='collapsed')
