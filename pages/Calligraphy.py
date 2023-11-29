@@ -12,7 +12,7 @@ st.markdown(
         input,body{
             font-family: 'Noto sans Kr', sans-serif !important;}
         /* 텍스트 정렬 */
-        input{ text-align: center; margin: 0px; font-size: 20px;}
+        input{ text-align: center; margin: -5px; font-size: 20px;}
         h1,h3{ text-align: center; }        
     </style>""", unsafe_allow_html=True)
 

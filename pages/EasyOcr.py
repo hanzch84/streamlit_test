@@ -5,9 +5,6 @@ import numpy as np
 from PIL import ImageFont, ImageDraw, Image
 
 st.write("""<style>
-         input{margin:-2px
-             
-         }
          div.row-widget.stRadio > div{flex-direction:row;}
          </style>""", unsafe_allow_html=True)
 
