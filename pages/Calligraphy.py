@@ -99,8 +99,6 @@ if col_btn_commit.button("학습지 생성"):
                         if text_area_input[0] == " ":
                             text_area_input = text_area_input[1:]
                                                         
-                
-                
             else: first_char = " "
             text_array_2D[row_num][col_num] = first_char
             char_box_id[f"{col_num}{row_num}"] = col.text_input(f"char{col_num}{row_num}",
@@ -108,14 +106,9 @@ if col_btn_commit.button("학습지 생성"):
                                                                 value=first_char,
                                                                 max_chars=1,
                                                                 key=f"char{col_num}{row_num}")
- 
-
-
-
-# 딕셔너리
 
 languages_selected = ["한국어", "영어"]
-
+font_color = (0,255,0)
 radio_cam_option = st.radio("카메라 촬영 vs 파일 업로드", ["카메라 촬영", "파일 업로드"],label_visibility='collapsed')
 
 if radio_cam_option == "카메라 촬영":
