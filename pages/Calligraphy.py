@@ -108,7 +108,7 @@ if col_btn_commit.button("학습지 생성"):
                                                                 key=f"char{col_num}{row_num}")
 
 languages_selected = ["ko", "en"]
-font_color = (0,255,0)
+font_color = hex_to_rgb(st.color_picker('폰트 색상을 지정하세요.','#00FF00'))
 radio_cam_option = st.radio("카메라 촬영 vs 파일 업로드", ["카메라 촬영", "파일 업로드"],label_visibility='collapsed')
 
 if radio_cam_option == "카메라 촬영":
@@ -123,4 +123,3 @@ if picture is not None:
         st.write(ocr_text)
     options = st.multiselect("인식된 단어를 고르세요.", ocr_text)
     st.write(f"당신이 선택한 단어: {', '.join(options)}")
-font_color = hex_to_rgb(st.color_picker('폰트 색상을 지정하세요.','#FF0000'))
