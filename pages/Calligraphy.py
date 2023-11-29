@@ -107,7 +107,7 @@ if col_btn_commit.button("학습지 생성"):
                                                                 max_chars=1,
                                                                 key=f"char{col_num}{row_num}")
 
-languages_selected = ["한국어", "영어"]
+languages_selected = ["ko", "en"]
 font_color = (0,255,0)
 radio_cam_option = st.radio("카메라 촬영 vs 파일 업로드", ["카메라 촬영", "파일 업로드"],label_visibility='collapsed')
 
