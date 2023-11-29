@@ -4,7 +4,12 @@ import cv2
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
 
-st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
+st.write("""<style>
+         input{margin:-2px
+             
+         }
+         div.row-widget.stRadio > div{flex-direction:row;}
+         </style>""", unsafe_allow_html=True)
 
 ocr_text=[]
 def ocr_label(image_data,lang,font_color):
