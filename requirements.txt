@@ -10,3 +10,5 @@ python-pptx
 olefile
 plotly
 google-cloud-vision
+docx
+qrcode
