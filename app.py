@@ -28,7 +28,7 @@ col3.image("https://media.licdn.com/dms/image/D5622AQGatP51eua6hw/feedshare-shri
 col_l, col_r = st.columns(2)
 
 col_l.video("https://youtu.be/qPbffXgERvM")
-col_r.video("https://youtube.com/shorts/Zqw2fIhj9NM")
+col_r.video("https://youtube.com/shorts/Zqw2fIhj9NM?si=bCD3hyiIGHAYzwnF")
 # st.divider()
 
 # st.title("Interactive Widget")
