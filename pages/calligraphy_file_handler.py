@@ -8,6 +8,7 @@ from docx.shared import Cm, RGBColor
 from io import BytesIO
 import pandas as pd
 import qrcode
+from pyzbar.pyzbar import decode
 import easyocr
 import cv2
 import numpy as np
@@ -227,6 +228,10 @@ else:
     picture = st.file_uploader('이미지를 업로드 하세요.', type=['png', 'jpg', 'jpeg'])
 
 if picture is not None:
+    d = decode(Image.open(picture))
+    for data in d:
+        st.code(data.type,language="kotlin")
+        st.code(data.data.decode('utf-8'),language="cpp")
     outputs = ocr_label(picture, languages_selected,font_color)
     if outputs.__len__() != 0:
         ocr_text = list(zip(*outputs))[1]

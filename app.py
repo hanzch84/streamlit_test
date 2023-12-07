@@ -20,7 +20,7 @@ st.subheader("Hello, world!")
 # ##########################################
 # #이미지 비디오 불러오기
 
-st.image("https://media.licdn.com/dms/image/D5622AQHtEuT-kNPClg/feedshare-shrink_800/0/1693565717065?e=1701907200&v=beta&t=I2QX7WK0_tK20cxc6lJfiZ0jrYlcguZ9Qxt1Qyo_YZ4")
+st.image("a.jpg")
 # st.image("https://img.freepik.com/free-vector/flat-design-mountain-landscape_23-2149172160.jpg?size=626&ext=jpg&ga=GA1.1.386372595.1697760000&semt=ais",width=700 )
 # st.video("https://www.youtube.com/watch?v=JUjpvu3mGGY", start_time=100)
 st.video("https://youtu.be/qPbffXgERvM")

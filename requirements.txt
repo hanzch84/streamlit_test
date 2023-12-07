@@ -12,3 +12,4 @@ plotly
 google-cloud-vision
 docx
 qrcode
+pyzbar

@@ -147,6 +147,8 @@ def on_max_change(index):
         st.session_state[f'item_max_{index}'] = current_min
     
 # 예산 계산 함수
+@st.cache
+
 def calculate_budget(budget, labels, prices, base_quantity, limited_quantity):
     try:
         text_out = f'사용해야 할 예산은 {format(budget,",")}원입니다.\n'
