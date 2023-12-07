@@ -21,14 +21,14 @@ col1, col2, col3 = st.columns(3)
 # #이미지 비디오 불러오기
 
 col1.image("a.jpg")
-col2.image("https://photos.app.goo.gl/nkAxAsjMKgSB1ZR18")
-col3.image("https://photos.app.goo.gl/67TNaYBqtQz1pz95A")
+col2.image("https://media.licdn.com/dms/image/D5622AQGuxS8pMNND_g/feedshare-shrink_2048_1536/0/1701987220010?e=1704931200&v=beta&t=BI3n2YvwzsdHYCEfqErSi_xMiFhCnngLBa5FqMpxSkM")
+col3.image("https://media.licdn.com/dms/image/D5622AQGatP51eua6hw/feedshare-shrink_1280/0/1701987219235?e=1704931200&v=beta&t=EQLltFXtkez6WgGpbwoKekdbNZJ0e6QZh4B_Pztn6q4")
 # st.image("https://img.freepik.com/free-vector/flat-design-mountain-landscape_23-2149172160.jpg?size=626&ext=jpg&ga=GA1.1.386372595.1697760000&semt=ais",width=700 )
 # st.video("https://www.youtube.com/watch?v=JUjpvu3mGGY", start_time=100)
 col_l, col_r = st.columns(2)
 
 col_l.video("https://youtu.be/qPbffXgERvM")
-col_r.video("https://photos.app.goo.gl/gXKYGsyjnK9RdFcs9")
+col_r.video("https://youtube.com/shorts/Zqw2fIhj9NM")
 # st.divider()
 
 # st.title("Interactive Widget")
