@@ -1,7 +1,5 @@
 import streamlit as st
 st.set_page_config(layout="wide")
-
-출처: https://python-programming-diary.tistory.com/137 [웹디자인 그리고, 클라우드 기반 인공지능 개발과 DevOps 실무:티스토리]
 st.title("현수의 페이지!")
 st.subheader("Hello, world!")
 
