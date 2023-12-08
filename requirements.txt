@@ -13,4 +13,4 @@ google-cloud-vision
 docx
 qrcode
 pyzbar
-zbar
+libzbar0
