@@ -3,6 +3,7 @@ import easyocr
 import cv2
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
+st.set_page_config(layout="centered")
 
 st.write("""<style>
          div.row-widget.stRadio > div{flex-direction:row;}

@@ -4,6 +4,7 @@ import pandas as pd
 import unicodedata
 import time
 from functools import reduce
+st.set_page_config(layout="centered")
 
 result_text = '''예산과 단가를 입력한 후\n계산하기 버튼을 누르면,
 예산에 딱 맞게 물건을\n살 수 있는 방법을 찾아줍니다.\n

@@ -13,6 +13,7 @@ import easyocr
 import cv2
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
+st.set_page_config(layout="centered")
 
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 
@@ -146,21 +147,36 @@ def create_word_document(text_grid, qr_code_data=None):
     return doc_bytes
 
 
-def ocr_label(image_data,lang,font_color):
+
+def ocr_label(image_data, lang, font_color):
     font_path = 'pages/D2Coding-Ver1.3.2-20180524.ttf'
     font = ImageFont.truetype(font_path, 24, encoding='utf-8')
     reader = easyocr.Reader(lang)
 
+    # 이미지 데이터가 NumPy 배열인 경우, 해당 배열을 사용
     if isinstance(image_data, np.ndarray):
         image = image_data
     else:
         try:
+            # 파일 포인터를 시작 부분으로 이동
+            image_data.seek(0)
+            # 파일 객체에서 데이터 읽기
             buffer = image_data.read()
-            nparr = np.frombuffer(buffer, np.uint8)
         except AttributeError:
-            nparr = np.frombuffer(image_data, np.uint8)
-        
+            # 이미 바이트 배열인 경우, 직접 사용
+            buffer = image_data
+
+        # 바이트 배열을 NumPy 배열로 변환
+        nparr = np.frombuffer(buffer, np.uint8)
+        if nparr.size == 0:
+            # 배열이 비어 있으면 오류 메시지 출력
+            raise ValueError("이미지 데이터가 비어 있습니다.")
+
+        # NumPy 배열을 이미지로 디코드
         image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if image is None:
+            # 이미지 디코딩 실패 시 오류 메시지 출력
+            raise ValueError("이미지 디코딩에 실패했습니다.")
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     result = reader.readtext(gray)
@@ -169,7 +185,7 @@ def ocr_label(image_data,lang,font_color):
         (top_left, top_right, bottom_right, bottom_left) = bbox
         top_left = tuple(map(int, top_left))
         bottom_right = tuple(map(int, bottom_right))
-        cv2.rectangle(image, top_left, bottom_right, (0,255,0), 2)
+        cv2.rectangle(image, top_left, bottom_right, (0, 255, 0), 2)
 
         image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         draw = ImageDraw.Draw(image_pil)
@@ -230,8 +246,7 @@ else:
 if picture is not None:
     d = decode(Image.open(picture))
     for data in d:
-        st.code(data.type,language="kotlin")
-        st.code(data.data.decode('utf-8'),language="cpp")
+        st.code(f"{data.type} = {data.data.decode('utf-8')}",language="ada")
     outputs = ocr_label(picture, languages_selected,font_color)
     if outputs.__len__() != 0:
         ocr_text = list(zip(*outputs))[1]

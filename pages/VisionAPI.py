@@ -5,6 +5,7 @@ from PIL import ImageFont, ImageDraw, Image
 
 # Google Cloud Vision API를 사용하기 위한 라이브러리 import
 from google.cloud import vision
+st.set_page_config(layout="centered")
 
 
 image = st.camera_input("#사진을 찍으면 문자를 인식해요!")

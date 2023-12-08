@@ -1,6 +1,7 @@
 # Plotly와 Streamlit을 사용한 데이터 시각화 애플리케이션
 import plotly.express as px  # Plotly Express를 불러옵니다.
 import streamlit as st  # Streamlit 라이브러리를 불러옵니다.
+st.set_page_config(layout="centered")
 
 st.title("plotly를 활용한 데이터 시각화")
 

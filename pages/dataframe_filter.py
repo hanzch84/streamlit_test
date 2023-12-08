@@ -7,6 +7,7 @@ from pandas.api.types import (
 import pandas as pd
 import streamlit as st
 import seaborn as sns
+st.set_page_config(layout="centered")
 
 
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:

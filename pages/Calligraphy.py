@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
 import docx
+st.set_page_config(layout="centered")
 
 st.markdown(
     """
