@@ -308,7 +308,10 @@ def line_intersection(line1, line2):
 def get_grid_cells(intersections, grid_size):
     expected_intersections = (grid_size[0] + 1) * (grid_size[1] + 1)
     if len(intersections) < expected_intersections:
+        return []    
         raise ValueError(f"충분한 교차점이 검출되지 않았습니다. 검출된 교차점의 수: {len(intersections)}, 필요한 교차점의 수: {expected_intersections}")
+        
+    
 
     # 교차점을 x와 y 좌표별로 정렬
     intersections = sorted(intersections, key=lambda x: (x[1], x[0]))

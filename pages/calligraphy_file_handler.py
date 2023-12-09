@@ -306,23 +306,31 @@ def line_intersection(line1, line2):
         return None
 
 def get_grid_cells(intersections, grid_size):
+    expected_intersections = (grid_size[0] + 1) * (grid_size[1] + 1)
+    if len(intersections) < expected_intersections:
+        return []    
+        raise ValueError(f"충분한 교차점이 검출되지 않았습니다. 검출된 교차점의 수: {len(intersections)}, 필요한 교차점의 수: {expected_intersections}")
+        
+    
+
     # 교차점을 x와 y 좌표별로 정렬
     intersections = sorted(intersections, key=lambda x: (x[1], x[0]))
-    
+
     # 그리드 셀의 위치를 저장할 리스트
     grid_cells = []
 
     # 그리드의 각 셀 위치 계산
-    for i in range(grid_size[1] - 1):
-        for j in range(grid_size[0] - 1):
-            top_left = intersections[i * grid_size[0] + j]
-            bottom_right = intersections[(i + 1) * grid_size[0] + (j + 1)]
+    for i in range(grid_size[1]):
+        for j in range(grid_size[0]):
+            top_left = intersections[i * (grid_size[0] + 1) + j]
+            bottom_right = intersections[(i + 1) * (grid_size[0] + 1) + (j + 1)]
 
             # 셀 위치: (x1, y1, x2, y2)
             cell_position = (top_left[0], top_left[1], bottom_right[0], bottom_right[1])
             grid_cells.append(cell_position)
 
     return grid_cells
+
 
     
 def find_grid(picture):
@@ -340,9 +348,9 @@ def find_grid(picture):
         raise ValueError("이미지 디코딩 실패")
 
     # 이미지 객체를 사용하여 그리드 셀 이미지를 얻음
-    grid_cells = find_and_split_grid(image)
+    grid_cells,vertical_lines,horizontal_lines = find_and_split_grid(image)
 
-    return grid_cells
+    return grid_cells,vertical_lines,horizontal_lines
 
 def recognize_characters(grid_cells):
     reader = easyocr.Reader(['en','ko'])  # 여기서 언어 설정을 할 수 있음
