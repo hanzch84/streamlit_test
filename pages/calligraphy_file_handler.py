@@ -15,12 +15,23 @@ from pyzbar.pyzbar import decode
 from PIL import ImageFont, ImageDraw, Image
 
 
+# 자동 줄바꿈을 위한 CSS 스타일 추가
+
 st.set_page_config(layout="centered")
-st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+    div.row-widget.stRadio > div{flex-direction:row;}
+    code {
+        overflow: auto;
+        white-space: pre-wrap;}
+    </style>
+    """,
+    unsafe_allow_html=True)
 
 # Calculate the table width to fit A4 paper
 table_width = Cm(21.0 - 2.0)  # A4 width minus 20mm left and right margins
-
+@st.cache_data
 def maketextgrid(text_area_input):
     single_marks = [".",",","?","!"]
     # 2차원 리스트를 생성합니다.
@@ -48,6 +59,7 @@ def maketextgrid(text_area_input):
     return text_array_2D
 
 # 새 MS워드 문서를 만듭니다.
+@st.cache_data
 def create_word_document(text_grid, qr_code_data=None):
     doc = Document()
     
@@ -200,7 +212,11 @@ def hex_to_rgb(hex_color):
     
     return (r, g, b)
 
+# 세션 상태에 'first_load' 키가 없으면 True를 설정합니다. (처음 로딩 시)
+if 'first_load' not in st.session_state:
+    st.session_state['first_load'] = True
 
+ 
 
 # Streamlit app
 st.title("도전! 예쁜 글씨 쓰기👍")
@@ -208,31 +224,38 @@ st.subheader("글씨쓰기 학습지 만들기 + 자동 채점하기")
 st.write("학습지의 앞면은 따라쓰기, 뒷면은 빈 칸입니다. 뒷면에 있는 qr코드로 손글씨의 정답을 인식합니다.")
          
 
-# Input text to be inserted into the table
-text_to_insert = st.text_area("Enter text (13x7 characters):", height=100)
+
+# 첫 로딩 시에만 텍스트 영역에 'hello'를 기본값으로 설정합니다.
+if st.session_state['first_load']:
+    text_to_insert = st.text_area("Enter text (13x7 characters):", height=100, value='오늘도 또 우리 수탉이 막 쫓기었다. 내가 점심을 먹고 나무를 하러 갈 양으로 나올 때이었다. 산으로 올라서려니까 등뒤에서 푸드득 푸드득 하고 닭의 횃소리가 야단이다.')
+    st.session_state['first_load'] = False  # 표시되지 않도록 설정합니다.
+else:
+    text_to_insert = st.text_area("Enter text (13x7 characters):", height=100)
+
 result_matrix = maketextgrid(text_to_insert)
 df =pd.DataFrame(result_matrix)          
 st.dataframe(df,hide_index=True,use_container_width=True)
-
-st.write(len(text_to_insert),len(text_to_insert)//13)
-
-if st.button("Generate Word Document"):
+col_make_btn, col_down_btn = st.columns(2)
+if col_make_btn.button("MS WORD 문서 생성하기"):
     
     # Create the Word document
     result_qr = ''.join([''.join(row) for row in result_matrix])
     doc_bytes = create_word_document(result_matrix, result_qr)
 
     # Offer the document for download
-    st.download_button(
-        label="Download Word Document",
+    col_down_btn.download_button(
+        label="MS WORD 문서 다운로드",
         data=doc_bytes,
         key="word_doc",
         file_name="table_with_text.docx",
         mime="application/octet-stream",
     )
 languages_selected = ["ko", "en"]
-font_color = hex_to_rgb(st.color_picker('폰트 색상을 지정하세요.','#00FF00'))
-radio_cam_option = st.radio("카메라 촬영 vs 파일 업로드", ["카메라 촬영", "파일 업로드"],label_visibility='collapsed')
+col_color_pick,col_color_label, col_image_pick = st.columns([1,4,4])
+
+font_color = hex_to_rgb(col_color_pick.color_picker('폰트 색상을 지정하세요.','#00FF00',label_visibility='collapsed'))
+col_color_label.write('폰트 색상을 지정하세요.')
+radio_cam_option = col_image_pick.radio("카메라 촬영 vs 파일 업로드", ["카메라 촬영", "파일 업로드"],label_visibility='collapsed')
 
 if radio_cam_option == "카메라 촬영":
     picture = st.camera_input("#사진을 찍으면 문자를 인식해요!")
@@ -282,7 +305,12 @@ def find_and_split_grid(image, grid_size=(13, 7)):
 
     # 교차점을 기준으로 셀 위치 계산
     intersections = np.array(intersections)
+    intersections = intersections[np.lexsort((intersections[:, 0], intersections[:, 1]))]
+    st.dataframe(intersections)
     grid_cells = get_grid_cells(intersections, grid_size)
+    st.dataframe(grid_cells)
+    
+
 
     # 셀 이미지 분할
     cell_images = []
@@ -324,7 +352,6 @@ def get_grid_cells(intersections, grid_size):
         for j in range(grid_size[0]):
             top_left = intersections[i * (grid_size[0] + 1) + j]
             bottom_right = intersections[(i + 1) * (grid_size[0] + 1) + (j + 1)]
-
             # 셀 위치: (x1, y1, x2, y2)
             cell_position = (top_left[0], top_left[1], bottom_right[0], bottom_right[1])
             grid_cells.append(cell_position)
@@ -355,7 +382,6 @@ def find_grid(picture):
 def recognize_characters(grid_cells):
     reader = easyocr.Reader(['en','ko'])  # 여기서 언어 설정을 할 수 있음
     recognized_chars = []
-
     for cell in grid_cells:
         if cell.size == 0 or cell is None:  # 비어 있는 셀 확인
             recognized_chars.append("")  # 비어 있는 셀에 대해서는 빈 문자열 추가
@@ -385,7 +411,8 @@ if picture is not None:
     # 그리드 찾기 및 캐릭터 인식
     grid_cells, horizontal_lines, vertical_lines = find_grid(picture)
     recognized_chars = recognize_characters(grid_cells)
-    st.table(recognized_chars)
+    np_array = np.array(recognized_chars)
+    st.table(np_array.reshape(7, 13))
 
     # 파일 포인터를 시작 부분으로 이동
     picture.seek(0)
