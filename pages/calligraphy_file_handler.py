@@ -212,66 +212,6 @@ def hex_to_rgb(hex_color):
     
     return (r, g, b)
 
-# 세션 상태에 'first_load' 키가 없으면 True를 설정합니다. (처음 로딩 시)
-if 'first_load' not in st.session_state:
-    st.session_state['first_load'] = True
-
- 
-
-# Streamlit app
-st.title("도전! 예쁜 글씨 쓰기👍")
-st.subheader("글씨쓰기 학습지 만들기 + 자동 채점하기")
-st.write("학습지의 앞면은 따라쓰기, 뒷면은 빈 칸입니다. 뒷면에 있는 qr코드로 손글씨의 정답을 인식합니다.")
-         
-
-
-# 첫 로딩 시에만 텍스트 영역에 'hello'를 기본값으로 설정합니다.
-if st.session_state['first_load']:
-    text_to_insert = st.text_area("Enter text (13x7 characters):", height=100, value='오늘도 또 우리 수탉이 막 쫓기었다. 내가 점심을 먹고 나무를 하러 갈 양으로 나올 때이었다. 산으로 올라서려니까 등뒤에서 푸드득 푸드득 하고 닭의 횃소리가 야단이다.')
-    st.session_state['first_load'] = False  # 표시되지 않도록 설정합니다.
-else:
-    text_to_insert = st.text_area("Enter text (13x7 characters):", height=100)
-
-result_matrix = maketextgrid(text_to_insert)
-df =pd.DataFrame(result_matrix)          
-st.dataframe(df,hide_index=True,use_container_width=True)
-col_make_btn, col_down_btn = st.columns(2)
-if col_make_btn.button("MS WORD 문서 생성하기"):
-    
-    # Create the Word document
-    result_qr = ''.join([''.join(row) for row in result_matrix])
-    doc_bytes = create_word_document(result_matrix, result_qr)
-
-    # Offer the document for download
-    col_down_btn.download_button(
-        label="MS WORD 문서 다운로드",
-        data=doc_bytes,
-        key="word_doc",
-        file_name="table_with_text.docx",
-        mime="application/octet-stream",
-    )
-languages_selected = ["ko", "en"]
-col_color_pick,col_color_label, col_image_pick = st.columns([1,4,4])
-
-font_color = hex_to_rgb(col_color_pick.color_picker('폰트 색상을 지정하세요.','#00FF00',label_visibility='collapsed'))
-col_color_label.write('폰트 색상을 지정하세요.')
-radio_cam_option = col_image_pick.radio("카메라 촬영 vs 파일 업로드", ["카메라 촬영", "파일 업로드"],label_visibility='collapsed')
-
-if radio_cam_option == "카메라 촬영":
-    picture = st.camera_input("#사진을 찍으면 문자를 인식해요!")
-else:
-    picture = st.file_uploader('이미지를 업로드 하세요.', type=['png', 'jpg', 'jpeg'])
-
-if picture is not None:
-    d = decode(Image.open(picture))
-    for data in d:
-        st.code(f"{data.type} = {data.data.decode('utf-8')}",language="ada")
-    outputs = ocr_label(picture, languages_selected,font_color)
-    if outputs.__len__() != 0:
-        ocr_text = list(zip(*outputs))[1]
-        st.write(ocr_text)
-
-
 def find_and_split_grid(image, grid_size=(13, 7)):
     # 이미지를 그레이스케일로 변환
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -306,9 +246,9 @@ def find_and_split_grid(image, grid_size=(13, 7)):
     # 교차점을 기준으로 셀 위치 계산
     intersections = np.array(intersections)
     intersections = intersections[np.lexsort((intersections[:, 0], intersections[:, 1]))]
-    st.dataframe(intersections)
+    #st.dataframe(intersections)
     grid_cells = get_grid_cells(intersections, grid_size)
-    st.dataframe(grid_cells)
+    #st.dataframe(grid_cells)
     
 
 
@@ -407,12 +347,69 @@ def draw_grid_on_image(image, horizontal_lines, vertical_lines):
 
     return image
 
-if picture is not None:    
+
+# 세션 상태에 'first_load' 키가 없으면 True를 설정합니다. (처음 로딩 시)
+if 'first_load' not in st.session_state:
+    st.session_state['first_load'] = True
+
+# Streamlit app
+st.title("도전! 예쁜 글씨 쓰기👍")
+st.subheader("글씨쓰기 학습지 만들기 + 자동 채점하기")
+st.write("학습지의 앞면은 따라쓰기, 뒷면은 빈 칸입니다. 뒷면에 있는 qr코드로 손글씨의 정답을 인식합니다.")
+
+# 첫 로딩 시에만 텍스트 영역에 기본값을 표시합니다.
+if st.session_state['first_load']:
+    text_to_insert = st.text_area("Enter text (13x7 characters):", height=100, value='오늘도 또 우리 수탉이 막 쫓기었다. 내가 점심을 먹고 나무를 하러 갈 양으로 나올 때이었다. 산으로 올라서려니까 등뒤에서 푸드득 푸드득 하고 닭의 횃소리가 야단이다.')
+    st.session_state['first_load'] = False  # 표시되지 않도록 설정합니다.
+else:
+    text_to_insert = st.text_area("Enter text (13x7 characters):", height=100)
+
+result_matrix = maketextgrid(text_to_insert)
+df =pd.DataFrame(result_matrix)          
+st.dataframe(df,hide_index=True,use_container_width=True)
+col_make_btn, col_down_btn = st.columns(2)
+if col_make_btn.button("MS WORD 문서 생성하기"):
+    
+    # Create the Word document
+    result_qr = ''.join([''.join(row) for row in result_matrix])
+    doc_bytes = create_word_document(result_matrix, result_qr)
+
+    # Offer the document for download
+    col_down_btn.download_button(
+        label="MS WORD 문서 다운로드",
+        data=doc_bytes,
+        key="word_doc",
+        file_name="table_with_text.docx",
+        mime="application/octet-stream",
+    )
+languages_selected = ["ko", "en"]
+col_color_pick,col_color_label, col_image_pick = st.columns([1,4,4])
+
+font_color = hex_to_rgb(col_color_pick.color_picker('폰트 색상을 지정하세요.','#00FF00',label_visibility='collapsed'))
+col_color_label.write('폰트 색상을 지정하세요.')
+radio_cam_option = col_image_pick.radio("카메라 촬영 vs 파일 업로드", ["카메라 촬영", "파일 업로드"],label_visibility='collapsed')
+
+if radio_cam_option == "카메라 촬영":
+    picture = st.camera_input("#사진을 찍으면 문자를 인식해요!")
+else:
+    picture = st.file_uploader('이미지를 업로드 하세요.', type=['png', 'jpg', 'jpeg'])
+
+if picture is not None:
+    outputs = ocr_label(picture, languages_selected,font_color)
+    if outputs.__len__() != 0:
+        ocr_text = list(zip(*outputs))[1]
+        st.write(ocr_text)
+        d = decode(Image.open(picture))
+    for data in d: #QR출력
+        #st.code(f"{data.type} = {data.data.decode('utf-8')}",language="ada")
+        #st.warning(f"{data.type} = {data.data.decode('utf-8')}")
+        st.write(f"{data.type} = {data.data.decode('utf-8')}")
+
     # 그리드 찾기 및 캐릭터 인식
     grid_cells, horizontal_lines, vertical_lines = find_grid(picture)
     recognized_chars = recognize_characters(grid_cells)
     np_array = np.array(recognized_chars)
-    st.table(np_array.reshape(7, 13))
+    #st.table(np_array.reshape(7, 13))
 
     # 파일 포인터를 시작 부분으로 이동
     picture.seek(0)
