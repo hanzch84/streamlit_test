@@ -358,16 +358,19 @@ st.write("학습지의 앞면은 따라쓰기, 뒷면은 빈 칸입니다. 뒷�
 # 첫 로딩 시에만 텍스트 영역에 기본값을 표시합니다.
 if st.session_state['first_load']:
     text_to_insert = st.text_area("Enter text (13x7 characters):", height=100, value='오늘도 또 우리 수탉이 막 쫓기었다. 내가 점심을 먹고 나무를 하러 갈 양으로 나올 때이었다. 산으로 올라서려니까 등뒤에서 푸드득 푸드득 하고 닭의 횃소리가 야단이다.')
+    
     st.session_state['first_load'] = False  # 표시되지 않도록 설정합니다.
+    tpp=0
 else:
     text_to_insert = st.text_area("Enter text (13x7 characters):", height=100)
+    tpp+=1
 
 result_matrix = maketextgrid(text_to_insert)
 df =pd.DataFrame(result_matrix)          
 st.dataframe(df,hide_index=True,use_container_width=True)
 col_make_btn, col_down_btn = st.columns(2)
 if col_make_btn.button("MS WORD 문서 생성하기"):
-    
+    if tpp <= 1: text_to_insert = '오늘도 또 우리 수탉이 막 쫓기었다. 내가 점심을 먹고 나무를 하러 갈 양으로 나올 때이었다. 산으로 올라서려니까 등뒤에서 푸드득 푸드득 하고 닭의 횃소리가 야단이다.'
     # Create the Word document
     result_qr = ''.join([''.join(row) for row in result_matrix])
     doc_bytes = create_word_document(result_matrix, result_qr)
