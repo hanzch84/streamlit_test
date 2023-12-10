@@ -1,6 +1,7 @@
 import streamlit as st
 st.set_page_config(layout="wide")
 st.title("현수의 페이지!")
+st.header("RPi&Python since 2014, Arduino&CPP From 2022")
 st.subheader("Hello, world!")
 
 col1, col2, col3 = st.columns(3)
