@@ -14,7 +14,10 @@ from io import BytesIO
 from pyzbar.pyzbar import decode
 from PIL import ImageFont, ImageDraw, Image
 
-
+# 세션 상태에 'first_load' 키가 없으면 True를 설정합니다. (처음 로딩 시)
+if 'first_load' not in st.session_state:
+    st.session_state['first_load'] = True
+    
 # 자동 줄바꿈을 위한 CSS 스타일 추가
 
 st.set_page_config(layout="centered")
@@ -346,11 +349,6 @@ def draw_grid_on_image(image, horizontal_lines, vertical_lines):
         cv2.line(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
     return image
-
-
-# 세션 상태에 'first_load' 키가 없으면 True를 설정합니다. (처음 로딩 시)
-if 'first_load' not in st.session_state:
-    st.session_state['first_load'] = True
 
 # Streamlit app
 st.title("도전! 예쁜 글씨 쓰기👍")
