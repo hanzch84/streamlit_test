@@ -396,34 +396,40 @@ if radio_cam_option == "카메라 촬영":
 else:
     picture = st.file_uploader('이미지를 업로드 하세요.', type=['png', 'jpg', 'jpeg'])
 
-if picture is not None:
-    outputs = ocr_label(picture, languages_selected,font_color)
-    if outputs.__len__() != 0:
-        ocr_text = list(zip(*outputs))[1]
-        st.write(ocr_text)
-        d = decode(Image.open(picture))
-    for data in d: #QR출력
-        #st.code(f"{data.type} = {data.data.decode('utf-8')}",language="ada")
-        #st.warning(f"{data.type} = {data.data.decode('utf-8')}")
-        st.write(f"{data.type} = {data.data.decode('utf-8')}")
 
-    # 그리드 찾기 및 캐릭터 인식
-    grid_cells, horizontal_lines, vertical_lines = find_grid(picture)
-    recognized_chars = recognize_characters(grid_cells)
-    np_array = np.array(recognized_chars)
-    #st.table(np_array.reshape(7, 13))
+try:
+        
+    if picture is not None:
+        outputs = ocr_label(picture, languages_selected,font_color)
+        if outputs.__len__() != 0:
+            ocr_text = list(zip(*outputs))[1]
+            st.write(ocr_text)
+            d = decode(Image.open(picture))
+        for data in d: #QR출력
+            #st.code(f"{data.type} = {data.data.decode('utf-8')}",language="ada")
+            #st.warning(f"{data.type} = {data.data.decode('utf-8')}")
+            st.write(f"{data.type} = {data.data.decode('utf-8')}")
 
-    # 파일 포인터를 시작 부분으로 이동
-    picture.seek(0)
-    # 파일 객체에서 데이터 읽기
-    file_bytes = np.asarray(bytearray(picture.read()), dtype=np.uint8)
+        # 그리드 찾기 및 캐릭터 인식
+        grid_cells, horizontal_lines, vertical_lines = find_grid(picture)
+        recognized_chars = recognize_characters(grid_cells)
+        np_array = np.array(recognized_chars)
+        #st.table(np_array.reshape(7, 13))
 
-    # 파일 데이터로부터 이미지 디코딩
-    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    
-    # 그리드 찾기 및 이미지에 그리드 그리기
-    image_with_grid = draw_grid_on_image(image.copy(), horizontal_lines, vertical_lines)
+        # 파일 포인터를 시작 부분으로 이동
+        picture.seek(0)
+        # 파일 객체에서 데이터 읽기
+        file_bytes = np.asarray(bytearray(picture.read()), dtype=np.uint8)
 
-    # Streamlit을 통해 이미지 출력
-    st. subheader("그리드 인식")
-    st.image(image_with_grid, channels="BGR")
+        # 파일 데이터로부터 이미지 디코딩
+        image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        
+        # 그리드 찾기 및 이미지에 그리드 그리기
+        image_with_grid = draw_grid_on_image(image.copy(), horizontal_lines, vertical_lines)
+
+        # Streamlit을 통해 이미지 출력
+        st. subheader("그리드 인식")
+        st.image(image_with_grid, channels="BGR")
+
+except:
+    pass
