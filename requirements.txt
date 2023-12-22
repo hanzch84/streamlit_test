@@ -1,7 +1,7 @@
 streamlit
 easyocr
 Pillow
-opencv-python-headless  # opencv-python 대신 opencv-python-headless 사용
+opencv-python
 numpy
 seaborn
 openpyxl
