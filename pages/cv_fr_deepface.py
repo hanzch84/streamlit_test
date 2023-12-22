@@ -1,5 +1,5 @@
 import streamlit as st
-import deepface as dfc
+#import deepface as dfc
 
 
-st.write(fc.__doc__)
+st.write("Deep face on hold")
