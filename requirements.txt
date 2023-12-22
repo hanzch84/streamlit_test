@@ -13,3 +13,4 @@ google-cloud-vision
 docx
 qrcode
 pyzbar
+deepface
