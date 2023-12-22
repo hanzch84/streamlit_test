@@ -1,7 +1,7 @@
 streamlit
 easyocr
 Pillow
-opencv-python
+opencv-python-headless  # opencv-python 대신 opencv-python-headless 사용
 numpy
 seaborn
 openpyxl
@@ -13,4 +13,3 @@ google-cloud-vision
 docx
 qrcode
 pyzbar
-deepface
